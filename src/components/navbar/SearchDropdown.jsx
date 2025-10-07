@@ -125,27 +125,36 @@ export default function SearchDropdown({ open, active, anchorRef, value, onApply
 
       {/* Desktop */}
       <div style={anchoredStyle} className="hidden lg:block">
-        {(active === "checkin" || active === "checkout" || active === "when") && (
-          <div className="mb-4 flex w-full items-center justify-center">
-            <div role="tablist" aria-label="Date selection type" className="rounded-full bg-[#EBEBEB] p-1 shadow-sm">
-              {["dates", "months", "flexible"].map((t) => {
-                const isActive = dateTab === t;
-                return (
-                  <button key={t} role="tab" aria-selected={isActive} onClick={() => { setDateTab(t); onTabChange?.(t); }} className={["px-8 py-3 text-[14px] font-medium rounded-full transition outline-none focus-visible:ring-2 focus-visible:ring-black/10", isActive ? "bg-white shadow-sm text-black font-semibold" : "text-[#222222] hover:text-[#717171]"].join(" ")}>
-                    {t[0].toUpperCase() + t.slice(1)}
-                  </button>
-                );
-              })}
-            </div>
-          </div>
-        )}
-
-        <div className={["w-[min(900px,calc(100vw-48px))] rounded-[32px] bg-white","shadow-[0_6px_20px_rgba(0,0,0,0.2)] ring-1 ring-black/5","transition-all duration-300", show ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2","px-8 pb-8 pt-6"].join(" ")} role="dialog" aria-modal="true">
+        <div className={["relative w-[min(920px,calc(100vw-64px))] rounded-[32px] bg-white","shadow-[0_6px_20px_rgba(0,0,0,0.2)] ring-1 ring-black/5","transition-all duration-300", show ? "opacity-100 translate-y-0" : "opacity-0 -translate-y-2","px-8 pb-10 pt-6"].join(" ")} role="dialog" aria-modal="true">
           <div className="mb-1 flex items-center justify-end">
             <button type="button" onClick={onClose} aria-label="Close" className="h-9 w-9 inline-flex items-center justify-center rounded-full hover:bg-[#F7F7F7]">
               <X className="h-5 w-5" />
             </button>
           </div>
+
+          {(active === "checkin" || active === "checkout" || active === "when") && (
+            <div className="mb-6 flex w-full items-center justify-center">
+              <div role="tablist" aria-label="Date selection type" className="rounded-full bg-[#EBEBEB] p-1 shadow-sm">
+                {["dates", "months", "flexible"].map((t) => {
+                  const isActive = dateTab === t;
+                  return (
+                    <button
+                      key={t}
+                      role="tab"
+                      aria-selected={isActive}
+                      onClick={() => { setDateTab(t); onTabChange?.(t); }}
+                      className={[
+                        "px-8 py-3 text-[14px] font-medium rounded-full transition outline-none focus-visible:ring-2 focus-visible:ring-black/10",
+                        isActive ? "bg-white shadow-sm text-black font-semibold" : "text-[#222222] hover:text-[#717171]",
+                      ].join(" ")}
+                    >
+                      {t[0].toUpperCase() + t.slice(1)}
+                    </button>
+                  );
+                })}
+              </div>
+            </div>
+          )}
 
           {active === "where" && <WherePanel query={query} setQuery={setQuery} location={location} setLocation={setLocation} />}
 
@@ -163,7 +172,7 @@ export default function SearchDropdown({ open, active, anchorRef, value, onApply
 
           {active === "who" && <GuestsPanel guests={guests} setGuests={setGuests} />}
 
-          <div className="pointer-events-none fixed" style={{ right: 32, bottom: 24 }}>
+          <div className="pointer-events-none absolute right-8 bottom-6">
             <div className="pointer-events-auto">
               <Button variant="primary" onClick={applyAndClose}>Search</Button>
             </div>
@@ -173,7 +182,7 @@ export default function SearchDropdown({ open, active, anchorRef, value, onApply
 
       {/* Mobile sheet */}
       <div className={`fixed inset-x-0 bottom-0 z-[110] block lg:hidden p-4 transition-transform duration-300 ${show ? "translate-y-0" : "translate-y-6"}`}>
-        <div className="max-h-[85vh] overflow-hidden rounded-[32px] bg-white shadow-[0_8px_28px_rgba(0,0,0,0.15)] ring-1 ring-black/5">
+        <div className="max-h-[85vh] overflow-hidden rounded-[32px] bg-white shadow-[0_8px_28px_rgba(0,0,0,0.15)] ring-1 ring-black/5 w-[min(920px,calc(100vw-64px))] mx-auto">
           <div className="flex items-center justify-between border-b border-[#EBEBEB] px-6 py-4">
             <div className="text-[15px] font-medium text-[#222222]">{active === "where" ? "Search destinations" : active === "who" ? "Guests" : "Select dates"}</div>
             <button type="button" onClick={onClose} className="inline-flex h-9 w-9 items-center justify-center rounded-full hover:bg-[#F7F7F7]">
@@ -279,7 +288,7 @@ function DatesPanel({ leftMonth, rightMonth, startDate, endDate, onDayClick, fle
   };
 
   return (
-    <div className="w-[min(900px,calc(100vw-64px))]">
+    <div className="w-[min(920px,calc(100vw-64px))]">
       <div className="mb-2 flex items-center justify-between">
         <button type="button" onClick={() => setOffset((v) => Math.max(0, v - 1))} className="hidden lg:inline-flex h-9 w-9 items-center justify-center rounded-full hover:bg-[#F7F7F7]" aria-label="Previous month"><ChevronLeft className="h-5 w-5" /></button>
         <div className="grow" />
@@ -363,7 +372,7 @@ function MonthsPanel({ startDate, endDate, setStartDate, setEndDate }) {
   const fmt = (d) => new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", year: "numeric" }).format(d);
 
   return (
-    <div className="w-[min(900px,calc(100vw-64px))] min-h-[600px]">
+    <div className="w-[min(920px,calc(100vw-64px))] min-h-[600px]">
       <div className="mb-6 text-center text-[18px] font-semibold text-[#222222]">When’s your trip?</div>
 
       <div ref={dialRef} className="mx-auto my-6 h-80 w-80 rounded-full relative flex items-center justify-center" role="slider" aria-label="Select number of months" aria-valuemin={1} aria-valuemax={12} aria-valuenow={months} tabIndex={0} onKeyDown={onKeyDown} onPointerDown={onPointerDown} style={{ background: `conic-gradient(#FF385C ${angle}deg, rgba(0,0,0,0.06) ${angle}deg)`, boxShadow: "inset 0 10px 25px rgba(0,0,0,.08), inset 0 -6px 12px rgba(0,0,0,.06), 0 2px 12px rgba(0,0,0,.06)" }}>
@@ -376,12 +385,25 @@ function MonthsPanel({ startDate, endDate, setStartDate, setEndDate }) {
         </div>
 
         {Array.from({ length: 12 }).map((_, i) => {
-          const a = (i / 12) * 360;
-          const r = 124;
-          const x = 50 + r * Math.sin((a * Math.PI) / 180);
-          const y = 50 - r * Math.cos((a * Math.PI) / 180);
+          const angleDeg = (i / 12) * 360;
+          const angleRad = (angleDeg * Math.PI) / 180;
+          const r = 124; // radius in px
+          const x = r * Math.sin(angleRad);
+          const y = -r * Math.cos(angleRad); // negative because CSS y grows downward
           const darker = i <= months - 1;
-          return <span key={i} className="absolute h-1.5 w-1.5 rounded-full" style={{ left: `calc(${x}% - 3px)`, top: `calc(${y}% - 3px)`, backgroundColor: darker ? "#9CA3AF" : "#E5E7EB" }} />;
+
+          return (
+            <span
+              key={i}
+              className="absolute h-1.5 w-1.5 rounded-full"
+              style={{
+                left: `calc(50% + ${x}px)`,
+                top: `calc(50% + ${y}px)`,
+                transform: "translate(-50%, -50%)",
+                backgroundColor: darker ? "#9CA3AF" : "#E5E7EB",
+              }}
+            />
+          );
         })}
 
         <div className={["absolute h-10 w-10 rounded-full bg-white shadow-md border-4 border-[#FF385C] transition-transform", dragging ? "cursor-grabbing" : "cursor-grab"].join(" ")} style={{ transform: `rotate(${angle}deg) translate(125px) rotate(-${angle}deg)` }} />
@@ -420,7 +442,7 @@ function FlexiblePanel({ setStartDate, setEndDate }) {
   };
 
   return (
-    <div className="w-[min(900px,calc(100vw-64px))] min-h-[600px]">
+    <div className="w-[min(920px,calc(100vw-64px))] min-h-[600px]">
       <div className="mb-8 text-center text-[24px] font-bold text-[#222222]">How long would you like to stay?</div>
 
       <div className="mb-8 flex items-center justify-center gap-3">{[
@@ -434,12 +456,12 @@ function FlexiblePanel({ setStartDate, setEndDate }) {
 
       <div className="mb-6 text-center text-[24px] font-bold text-[#222222]">Go anytime</div>
 
-      <div className="relative">
-        <button type="button" onClick={() => scrollBy(1)} aria-label="Scroll months" className="absolute right-2 top-1/2 z-10 -translate-y-1/2 rounded-full border border-[#DDDDDD] bg-white p-3 shadow hover:shadow-md">
+      <div className="relative pr-[56px]">
+        <button type="button" onClick={() => scrollBy(1)} aria-label="Scroll months" className="absolute right-6 top-1/2 z-10 -translate-y-1/2 rounded-full border border-[#DDDDDD] bg-white p-3 shadow hover:shadow-md">
           <ChevronRight className="h-5 w-5 text-[#222222]" />
         </button>
 
-        <div ref={monthsRef} className="flex gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+        <div ref={monthsRef} className="flex gap-4 overflow-x-auto pb-2 pr-16 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
           {months.map((m) => (
             <button key={m.id} type="button" onClick={() => chooseMonth(m.date)} className="w-[140px] h-[160px] shrink-0 rounded-[16px] border border-[#DDDDDD] bg-white p-7 text-center transition hover:shadow-[0_4px_12px_rgba(0,0,0,0.15)] hover:-translate-y-[4px] hover:border-black">
               <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-[#F7F7F7]"><Calendar className="h-6 w-6 text-[#717171]" /></div>
