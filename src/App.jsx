@@ -49,11 +49,11 @@ export default function App() {
       </div>
 
       {/* Inspiration grid */}
-      <InspirationSection
+      {/* <InspirationSection
         items={INSPIRATION_CATEGORIES}
         onClick={(it) => console.log("Inspiration:", it)}
         className="mt-10"
-      />
+      /> */}
     </Layout>
   );
 }

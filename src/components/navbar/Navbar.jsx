@@ -1,74 +1,53 @@
-import React, { useEffect, useState, useCallback } from "react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 import NavbarDesktop from "./NavbarDesktop";
 import NavbarMobile from "./NavbarMobile";
+import useScrollPosition from "../../hooks/useScrollPosition";
 
-// Local lightweight scroll hook to avoid external deps
-function useScrolled(threshold = 50) {
-  const [scrolled, setScrolled] = useState(false);
+export default function Navbar() {
+  const { isScrolled } = useScrollPosition({ scrolledThreshold: 50 });
+  const [activeTab, setActiveTab] = useState("homes");
 
+  // When scrolled, clicking the compact pill expands the full SearchBar.
+  const [forceExpanded, setForceExpanded] = useState(false);
+
+  // If user scrolls back to top, reset expansion (full bar will be visible anyway).
   useEffect(() => {
-    const onScroll = () => {
-      setScrolled(window.scrollY > threshold);
-    };
-    onScroll();
-    window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, [threshold]);
+    if (!isScrolled) setForceExpanded(false);
+  }, [isScrolled]);
 
-  return scrolled;
-}
+  const handleCompactClick = useCallback(() => {
+    setForceExpanded(true);
+  }, []);
 
-export default function Navbar({
-  defaultActive = "homes",
-  onTabChange,
-  onSearchClick,
-}) {
-  const isScrolled = useScrolled(50);
-  const [active, setActive] = useState(defaultActive);
-
-  const handleChange = useCallback(
-    (key) => {
-      setActive(key);
-      onTabChange?.(key);
-    },
-    [onTabChange]
+  const desktopProps = useMemo(
+    () => ({
+      isScrolled,
+      activeTab,
+      onChangeTab: setActiveTab,
+      forceExpanded,
+      onCompactClick: handleCompactClick,
+    }),
+    [isScrolled, activeTab, forceExpanded, handleCompactClick]
   );
-
-  const handleSearch = useCallback(() => {
-    onSearchClick?.();
-  }, [onSearchClick]);
-
-  const navItems = [
-    { key: "homes", label: "Homes", isNew: false, icon: "home" },
-    { key: "experiences", label: "Experiences", isNew: true, icon: "experiences" },
-    { key: "services", label: "Services", isNew: true, icon: "services" },
-  ];
 
   return (
     <header
-      className={`sticky top-0 z-50 bg-white/90 backdrop-blur-sm shadow-sm transition-all`}
+      className={[
+        "sticky top-0 z-50 w-full shadow-sm",
+        "bg-white/90 backdrop-blur-sm transition-all duration-300",
+        isScrolled ? "py-2" : "py-3",
+      ].join(" ")}
       role="banner"
+      aria-label="Site header"
     >
       {/* Desktop */}
       <div className="hidden lg:block">
-        <NavbarDesktop
-          isScrolled={isScrolled}
-          items={navItems}
-          activeKey={active}
-          onChange={handleChange}
-          onSearchClick={handleSearch}
-        />
+        <NavbarDesktop {...desktopProps} />
       </div>
 
       {/* Mobile/Tablet */}
       <div className="block lg:hidden">
-        <NavbarMobile
-          isScrolled={isScrolled}
-          items={navItems}
-          activeKey={active}
-          onChange={handleChange}
-          onSearchClick={handleSearch}
-        />
+        <NavbarMobile />
       </div>
     </header>
   );
