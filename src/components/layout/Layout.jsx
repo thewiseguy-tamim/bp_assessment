@@ -3,7 +3,6 @@ import Navbar from "../navbar/Navbar";
 import FooterSection from "../sections/FooterSection";
 import WelcomeModal from "../modals/WelcomeModal";
 import PriceModal from "../modals/PriceModal";
-import SearchModal from "../modals/SearchModal";
 import Button from "../common/Button";
 import { ChevronUp } from "lucide-react";
 
@@ -25,7 +24,7 @@ export default function Layout({
   showWelcome = true,
   showPriceToast = true,
 }) {
-  const [searchOpen, setSearchOpen] = useState(false);
+  // legacy centered search modal removed; SearchBar now manages search state locally
   const [showToTop, setShowToTop] = useState(false);
 
   useEffect(() => {
@@ -49,7 +48,7 @@ export default function Layout({
       </a>
 
       {/* Header */}
-      <Navbar onSearchClick={() => setSearchOpen(true)} />
+  <Navbar />
 
       {/* Main content */}
       <main id="main-content" className="relative">
@@ -63,12 +62,7 @@ export default function Layout({
       {showWelcome && <WelcomeModal />}
       {showPriceToast && <PriceModal position="bottom-left" />}
 
-      {/* Global Search modal hook-up (optional) */}
-      <SearchModal
-        open={searchOpen}
-        onClose={() => setSearchOpen(false)}
-        onSelect={() => setSearchOpen(false)}
-      />
+      {/* Removed legacy centered SearchModal. Search happens inside Navbar SearchBar now. */}
 
       {/* Scroll-to-top button */}
       <div className="fixed bottom-4 right-4 z-50">

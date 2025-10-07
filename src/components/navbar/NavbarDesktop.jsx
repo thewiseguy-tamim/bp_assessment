@@ -2,6 +2,7 @@ import React from "react";
 import Logo from "../common/Logo";
 import Button from "../common/Button";
 import Badge from "../common/Badge";
+import SearchBar from "./SearchBar";
 import {
   Home as HomeIcon,
   PartyPopper,
@@ -9,7 +10,6 @@ import {
   Globe,
   Menu,
   User,
-  Search as SearchIcon,
 } from "lucide-react";
 
 /**
@@ -24,7 +24,6 @@ export default function NavbarDesktop({
   items,
   activeKey,
   onChange,
-  onSearchClick,
 }) {
   const heightClass = isScrolled ? "h-16" : "h-20";
 
@@ -121,74 +120,10 @@ export default function NavbarDesktop({
         </div>
       </div>
 
-      {/* Search trigger pill */}
+      {/* Interactive SearchBar with anchored dropdown */}
       <div className="pb-3">
         <div className="mx-auto max-w-[980px] px-6">
-          <button
-            type="button"
-            onClick={onSearchClick}
-            className="w-full rounded-full border border-[#DDDDDD] bg-white shadow-sm transition-all hover:shadow-md focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/10"
-            aria-label="Open search"
-          >
-            <div className="flex items-center justify-between pl-4 pr-2 py-3">
-              <div className="flex items-center gap-4">
-                {/* Where */}
-                <div className="flex flex-col text-left">
-                  <span className="text-[13px] font-medium text-[#222222] leading-none">
-                    Where
-                  </span>
-                  <span className="text-[13px] text-[#717171] leading-none mt-1">
-                    Search destinations
-                  </span>
-                </div>
-
-                <div className="hidden sm:block h-8 w-px bg-[#DDDDDD]" />
-
-                {/* Check in */}
-                <div className="hidden sm:flex flex-col text-left">
-                  <span className="text-[13px] font-medium text-[#222222] leading-none">
-                    Check in
-                  </span>
-                  <span className="text-[13px] text-[#717171] leading-none mt-1">
-                    Add dates
-                  </span>
-                </div>
-
-                <div className="hidden sm:block h-8 w-px bg-[#DDDDDD]" />
-
-                {/* Check out */}
-                <div className="hidden sm:flex flex-col text-left">
-                  <span className="text-[13px] font-medium text-[#222222] leading-none">
-                    Check out
-                  </span>
-                  <span className="text-[13px] text-[#717171] leading-none mt-1">
-                    Add dates
-                  </span>
-                </div>
-
-                <div className="hidden sm:block h-8 w-px bg-[#DDDDDD]" />
-
-                {/* Who */}
-                <div className="hidden md:flex flex-col text-left">
-                  <span className="text-[13px] font-medium text-[#222222] leading-none">
-                    Who
-                  </span>
-                  <span className="text-[13px] text-[#717171] leading-none mt-1">
-                    Add guests
-                  </span>
-                </div>
-              </div>
-
-              <Button
-                variant="primary"
-                size="icon"
-                aria-label="Search"
-                className="shadow-md"
-              >
-                <SearchIcon className="h-5 w-5" />
-              </Button>
-            </div>
-          </button>
+          <SearchBar />
         </div>
       </div>
     </div>
