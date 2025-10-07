@@ -1,6 +1,7 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import Badge from "../common/Badge";
 import { Heart, ChevronLeft, ChevronRight } from "lucide-react";
+const FALLBACK_IMG = "https://placehold.co/1200x900?text=No+Image";
 
 /**
  * PropertyCard
@@ -39,13 +40,21 @@ export default function PropertyCard({
     type,
   } = property || {};
 
-  const imageList = images?.length
-    ? images
-    : [
-        "https://source.unsplash.com/featured/?apartment",
-        "https://source.unsplash.com/featured/?interior",
-        "https://source.unsplash.com/featured/?bedroom",
-      ];
+  // Stable, sized fallback images to reduce Unsplash redirect/429 issues
+  const imageList = useMemo(() => {
+    if (Array.isArray(images) && images.length) return images;
+    return [
+      "https://source.unsplash.com/1200x900/?apartment&sig=1",
+      "https://source.unsplash.com/1200x900/?interior&sig=2",
+      "https://source.unsplash.com/1200x900/?bedroom&sig=3",
+    ];
+  }, [images]);
+  const onImgError = (e) => {
+    // Swap to a guaranteed placeholder and end skeleton state
+    e.currentTarget.onerror = null;
+    e.currentTarget.src = FALLBACK_IMG;
+    setLoaded(true);
+  };
 
   // Carousel state
   const [index, setIndex] = useState(0);
@@ -140,10 +149,12 @@ export default function PropertyCard({
           <img
             src={imageList[index]}
             alt={title || "Property image"}
+            decoding="async"
             className={`h-full w-full object-cover transition-transform duration-300 ${
               loaded ? "opacity-100" : "opacity-0"
             } group-hover:scale-105`}
             onLoad={() => setLoaded(true)}
+            onError={onImgError}
             loading="lazy"
           />
           {/* Skeleton */}

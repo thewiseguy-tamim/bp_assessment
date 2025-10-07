@@ -50,10 +50,10 @@ const NEIGHBORHOODS = {
 };
 
 const TITLES = [
-  (n, c) => `Apartment in ${n}`,
-  (n, c) => `Room in ${n}`,
+  (n) => `Apartment in ${n}`,
+  (n) => `Room in ${n}`,
   (n, c) => `Guesthouse in ${c.city}`,
-  (n, c) => `Condo in ${n}`,
+  (n) => `Condo in ${n}`,
   (n, c) => `Apartment in ${c.city}`,
 ];
 

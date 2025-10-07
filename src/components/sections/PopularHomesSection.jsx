@@ -58,7 +58,7 @@ export default function PopularHomesSection({
         {/* Scroller: snap on mobile; smooth scroll everywhere */}
         <div
           ref={scrollRef}
-          className="scroll-smooth overflow-x-auto pb-2"
+          className="scroll-smooth overflow-x-auto pb-2 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
         >
           <div className="flex gap-6 snap-x snap-mandatory">
             {properties.map((p) => (

@@ -34,13 +34,7 @@ export default function App() {
         onSearchSubmit={handleSearchSubmit}
       />
 
-      {/* Categories / filters preview */}
-      <CategorySection
-        title="Browse for your next stay"
-        categories={CATEGORY_LIST}
-        onSelect={(c) => console.log("Category selected:", c)}
-        className="mt-2"
-      />
+      {/* Categories / filters preview removed per request */}
 
       {/* Popular homes sections by city */}
       <div className="mt-6 space-y-8">
