@@ -55,19 +55,36 @@ export default function SearchBar({ value, onChange, onSubmit, className = "" })
   };
 
   const openDropdown = (sectionKey) => {
+    // Rule 1: Check in/Check out opens Dates, bar stays 4-section
     if (sectionKey === "checkin" || sectionKey === "checkout") {
-      setSearchBarMode("when-active");
-      setActiveSection("when");
+      setSearchBarMode("default");
+      setActiveSection(sectionKey);
       setOpen(true);
       return;
     }
+    // "When" appears only after Months/Flexible tab is chosen
     if (sectionKey === "when") {
       setActiveSection("when");
       setOpen(true);
       return;
     }
+    // Where/Who
     setActiveSection(sectionKey);
     setOpen(true);
+  };
+
+  // Called by dropdown when tabs change
+  const handleTabChange = (tab) => {
+    if (tab === "months" || tab === "flexible") {
+      // Rule 2: transform to When
+      setSearchBarMode("when-active");
+      setActiveSection("when");
+    } else {
+      // Rule 3: Dates -> revert to 4-section
+      setSearchBarMode("default");
+      // Keep focus on original section if user came from checkin/checkout
+      if (activeSection === "when") setActiveSection("checkin");
+    }
   };
 
   const handleApply = (partial) => {
@@ -218,6 +235,7 @@ export default function SearchBar({ value, onChange, onSubmit, className = "" })
         value={state}
         onApply={handleApply}
         onClose={closeDropdown}
+        onTabChange={handleTabChange}
       />
     </div>
   );

@@ -10,6 +10,7 @@ import {
   Plus,
   ChevronLeft,
   ChevronRight,
+  Calendar,
 } from "lucide-react";
 
 /**
@@ -60,6 +61,7 @@ export default function SearchDropdown({
   value,
   onApply,
   onClose,
+  onTabChange, // NEW
 }) {
   const [show, setShow] = useState(false);
   // local edit state
@@ -99,30 +101,25 @@ export default function SearchDropdown({
   }, [open, onClose]);
 
   // anchored position for desktop — align under active section
-    const anchoredStyle = useMemo(() => {
-      const el = anchorRef?.current;
-      if (!el) return {};
-      const rect = el.getBoundingClientRect();
-      const gap = 8;               // space between bar and bubble
-      const vpW = window.innerWidth;
-      const pad = 16;              // viewport padding clamp
+  const anchoredStyle = useMemo(() => {
+    const el = anchorRef?.current;
+    if (!el) return {};
+    const rect = el.getBoundingClientRect();
+    const gap = 12; // 12–16px gap
+    const vpW = window.innerWidth;
+    const pad = 16;
+    const top = rect.bottom + gap; // fixed coords (no scrollY)
 
-      // Top is viewport-relative with position: fixed (no scrollY addition)
-      const top = rect.bottom + gap;
-
-      // Align like Airbnb: Where = left, Dates = center, Who = right
-      if (active === "where") {
-        const left = Math.max(pad, rect.left);
-        return { top, left };
-      }
-      if (active === "who") {
-        const right = Math.max(pad, vpW - rect.right);
-        return { top, right, left: "auto" };
-      }
-      // Center for checkin/checkout
-      const center = rect.left + rect.width / 2;
-      return { top, left: center, transform: "translateX(-50%)" };
-    }, [anchorRef, active]);
+    if (active === "where") {
+      return { position: "fixed", top, left: Math.max(pad, rect.left), zIndex: 110 };
+    }
+    if (active === "who") {
+      return { position: "fixed", top, right: Math.max(pad, vpW - rect.right), left: "auto", zIndex: 110 };
+    }
+    // Center for checkin/checkout/when
+    const center = rect.left + rect.width / 2;
+    return { position: "fixed", top, left: center, transform: "translateX(-50%)", zIndex: 110 };
+  }, [anchorRef, active]);
 
   // calendar plumbing
   const today = useMemo(() => new Date(), []);
@@ -187,7 +184,7 @@ export default function SearchDropdown({
                 setLocation={setLocation}
               />
             )}
-            {(active === "checkin" || active === "checkout") && (
+              {(active === "checkin" || active === "checkout" || active === "when") && dateTab === "dates" && (
               <DatesPanel
                 dateTab={dateTab}
                 setDateTab={setDateTab}
@@ -202,6 +199,17 @@ export default function SearchDropdown({
                 setOffset={setOffset}
               />
             )}
+              {(active === "checkin" || active === "checkout" || active === "when") && dateTab === "months" && (
+                <MonthsPanel
+                  startDate={startDate}
+                  endDate={endDate}
+                  setStartDate={setStartDate}
+                  setEndDate={setEndDate}
+                />
+              )}
+              {(active === "checkin" || active === "checkout" || active === "when") && dateTab === "flexible" && (
+                <FlexiblePanel setStartDate={setStartDate} setEndDate={setEndDate} />
+              )}
             {active === "who" && <GuestsPanel guests={guests} setGuests={setGuests} />}
           </div>
 
@@ -210,7 +218,7 @@ export default function SearchDropdown({
       </div>
 
       {/* Desktop anchored card */}
-      <div className="hidden lg:block" style={{ position: "fixed", ...anchoredStyle, zIndex: 110 }}>
+      <div className="hidden lg:block" style={anchoredStyle}>
         <div
           className={`w-[min(850px,calc(100vw-48px))] rounded-[32px] bg-white p-8 shadow-[0_8px_28px_rgba(0,0,0,0.15)] ring-1 ring-black/5 transition-all ${
             show ? "opacity-100 translate-y-0" : "opacity-0 translate-y-2"
@@ -218,27 +226,32 @@ export default function SearchDropdown({
           role="dialog"
           aria-modal="true"
         >
-          <div className="mb-4 flex items-center justify-between">
-            <div className="rounded-full bg-[#F7F7F7] p-1">
-              {["Dates", "Months", "Flexible"].map((t) => {
-                const key = t.toLowerCase();
-                const isActive = dateTab === key;
-                return (
-                  <button
-                    key={t}
-                    type="button"
-                    onClick={() => setDateTab(key)}
-                    className={[
-                      "rounded-full px-4 py-2 text-[14px] font-medium transition",
-                      isActive ? "bg-white shadow-sm" : "text-[#222222] hover:bg-white/50",
-                    ].join(" ")}
-                  >
-                    {t}
-                  </button>
-                );
-              })}
-            </div>
-
+          {/* Header: tabs (left) + close (right). Tabs show for checkin/checkout/when */}
+          <div className="mb-3 flex items-center justify-between">
+            {(active === "checkin" || active === "checkout" || active === "when") && (
+              <div role="tablist" aria-label="Date selection type" className="rounded-full bg-[#EBEBEB] p-1 shadow-sm">
+                {["dates", "months", "flexible"].map((t) => {
+                  const isActive = dateTab === t;
+                  return (
+                    <button
+                      key={t}
+                      role="tab"
+                      aria-selected={isActive}
+                      onClick={() => {
+                        setDateTab(t);
+                        onTabChange?.(t);
+                      }}
+                      className={[
+                        "px-7 py-3 text-[14px] font-medium rounded-full transition outline-none focus-visible:ring-2 focus-visible:ring-black/10",
+                        isActive ? "bg-white shadow-sm text-black font-semibold" : "text-[#222222] hover:text-[#717171]",
+                      ].join(" ")}
+                    >
+                      {t[0].toUpperCase() + t.slice(1)}
+                    </button>
+                  );
+                })}
+              </div>
+            )}
             <button
               type="button"
               onClick={onClose}
@@ -539,6 +552,120 @@ function Footer({ onApply, onClose }) {
       <Button variant="primary" onClick={onApply}>
         Search
       </Button>
+    </div>
+  );
+}
+
+function MonthsPanel({ startDate, endDate, setStartDate, setEndDate }) {
+  const [months, setMonths] = useState(3);
+  const nextMonthStart = useMemo(() => {
+    const now = new Date();
+    return new Date(now.getFullYear(), now.getMonth() + 1, 1);
+  }, []);
+
+  useEffect(() => {
+    const s = nextMonthStart;
+    const e = new Date(s.getFullYear(), s.getMonth() + months, 1);
+    setStartDate(s);
+    setEndDate(e);
+  }, [months, nextMonthStart, setStartDate, setEndDate]);
+
+  const angle = (months / 12) * 300 + 30;
+  const fmt = (d) =>
+    new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", year: "numeric" }).format(d || new Date());
+
+  return (
+    <div className="w-[min(920px,calc(100vw-64px))] min-h-[600px]">
+      <div className="mb-6 text-center text-[18px] font-semibold text-[#222222]">When’s your trip?</div>
+      <div
+        className="mx-auto my-6 h-80 w-80 rounded-full shadow-inner relative flex items-center justify-center"
+        style={{ background: `conic-gradient(#FF385C ${angle}deg, rgba(0,0,0,0.06) ${angle}deg)` }}
+      >
+        <div className="h-40 w-40 rounded-full bg-white shadow-md flex items-center justify-center text-center">
+          <div>
+            <div className="text-4xl font-bold text-[#222222]">{months}</div>
+            <div className="text-sm text-[#717171]">months</div>
+          </div>
+        </div>
+        <div
+          className="absolute h-9 w-9 rounded-full bg-white shadow-md border-4 border-[#FF385C] transition-transform"
+          style={{ transform: `rotate(${angle}deg) translate(125px) rotate(-${angle}deg)` }}
+        />
+      </div>
+      <div className="mt-2 flex items-center justify-center gap-3">
+        <button type="button" onClick={() => setMonths((m) => Math.max(1, m - 1))} className="rounded-full border border-[#DDDDDD] px-4 py-2 text-[14px] hover:bg-[#F7F7F7]">−</button>
+        <button type="button" onClick={() => setMonths((m) => Math.min(12, m + 1))} className="rounded-full border border-[#DDDDDD] px-4 py-2 text-[14px] hover:bg-[#F7F7F7]">+</button>
+      </div>
+      <div className="mt-8 text-center text-[15px] text-[#222222]">
+        <span className="underline">{fmt(startDate)}</span>
+        <span className="mx-2 text-[#717171]">to</span>
+        <span className="underline">{fmt(endDate)}</span>
+      </div>
+    </div>
+  );
+}
+
+function FlexiblePanel({ setStartDate, setEndDate }) {
+  const [length, setLength] = useState("weekend");
+  const months = useMemo(() => {
+    const now = new Date();
+    return Array.from({ length: 12 }, (_, i) => {
+      const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
+      return { id: i, date: d, label: new Intl.DateTimeFormat(undefined, { month: "long", year: "numeric" }).format(d) };
+    });
+  }, []);
+
+  const choose = (d) => {
+    const s = new Date(d.getFullYear(), d.getMonth(), 1);
+    const nights = length === "weekend" ? 2 : length === "week" ? 7 : 30;
+    const e = new Date(s);
+    e.setDate(e.getDate() + nights);
+    setStartDate(s);
+    setEndDate(e);
+  };
+
+  return (
+    <div className="w-[min(920px,calc(100vw-64px))] min-h-[600px]">
+      <div className="mb-8 text-center text-[24px] font-bold text-[#222222]">How long would you like to stay?</div>
+      <div className="mb-8 flex items-center justify-center gap-3">
+        { ["weekend","week","month"].map((key) => {
+          const label = key === "weekend" ? "Weekend" : key[0].toUpperCase() + key.slice(1);
+          const active = length === key;
+          return (
+            <button
+              key={key}
+              type="button"
+              onClick={() => setLength(key)}
+              className={[
+                "rounded-full border px-7 py-3 text-[16px] transition",
+                active ? "bg-black text-white border-black" : "bg-white text-black border-[#B0B0B0] hover:border-[#222222] hover:shadow",
+              ].join(" ")}
+            >
+              {label}
+            </button>
+          );
+        }) }
+      </div>
+
+      <div className="mb-6 text-center text-[24px] font-bold text-[#222222]">Go anytime</div>
+      <div className="relative">
+        <div className="flex gap-4 overflow-x-auto pb-2 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden">
+          {months.map((m) => (
+            <button
+              key={m.id}
+              type="button"
+              onClick={() => choose(m.date)}
+              className="w-[140px] h-[160px] shrink-0 rounded-[16px] border border-[#DDDDDD] bg-white p-7 text-center transition hover:shadow-[0_4px_12px_rgba(0,0,0,0.15)] hover:-translate-y-[4px] hover:border-black"
+            >
+              <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-[#F7F7F7]">
+                <Calendar className="h-6 w-6 text-[#717171]" />
+              </div>
+              <div className="text-[17px] font-bold text-[#222222]">{m.label.split(" ")[0]}</div>
+              <div className="text-[14px] text-[#717171]">{m.label.split(" ").slice(1).join(" ")}</div>
+            </button>
+          ))}
+        </div>
+      </div>
     </div>
   );
 }
