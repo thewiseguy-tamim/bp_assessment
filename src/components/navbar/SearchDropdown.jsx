@@ -627,24 +627,24 @@ function MonthsPanel({ startDate, endDate, setStartDate, setEndDate }) {
   useEffect(() => {
     const s = baseStart;
     const e = new Date(s.getFullYear(), s.getMonth() + months, 1);
-    setStartDate(s);
-    setEndDate(e);
+    setStartDate?.(s);
+    setEndDate?.(e);
   }, [months, baseStart, setStartDate, setEndDate]);
 
   const clamp = (n, a, b) => Math.min(b, Math.max(a, n));
   const dialRef = useRef(null);
   const [dragging, setDragging] = useState(false);
 
-  // Unified angle system: 0deg at 12 o’clock (top), clockwise
-  const START = 30;      // active arc starts 30deg from top
-  const SWEEP = 300;     // total active arc length
+  // Arc config: 0deg at top; leave a 60deg gap (30deg on each side)
+  const START = 30;
+  const SWEEP = 300;
 
   const toAngleFromCenterTop = (cx, cy, x, y) => {
     const rad = Math.atan2(y - cy, x - cx);
-    let deg = (rad * 180) / Math.PI; // -180..180, 0 at 3 o'clock
-    deg += 90; // move zero to 12 o'clock
+    let deg = (rad * 180) / Math.PI; // -180..180, 0 at 3 o’clock
+    deg += 90; // move 0 to 12 o’clock
     if (deg < 0) deg += 360;
-    return deg; // 0..360, 0 at top
+    return deg; // 0..360 from top
   };
 
   const onPointer = (e) => {
@@ -682,23 +682,24 @@ function MonthsPanel({ startDate, endDate, setStartDate, setEndDate }) {
     }
   };
 
-  // Dynamic radius (keeps handle/dots aligned at any zoom/DPI)
-  const handleSize = 40; // h-10 w-10
-  const trackInset = 14;
-  const [radius, setRadius] = useState(124);
+  // Sizing
+  const handleSize = 44;
+  const trackInset = 16;
+  const [radius, setRadius] = useState(126);
   useEffect(() => {
     const update = () => {
       if (!dialRef.current) return;
       const w = dialRef.current.offsetWidth;
       const r = w / 2 - trackInset - handleSize / 2;
-      setRadius(Math.max(60, r));
+      setRadius(Math.max(70, r));
     };
     update();
     window.addEventListener("resize", update);
     return () => window.removeEventListener("resize", update);
   }, []);
 
-  const angleFromTop = START + (months / 12) * SWEEP; // 0° at top
+  const angleFromTop = START + (months / 12) * SWEEP;
+
   const fmt = (d) =>
     new Intl.DateTimeFormat(undefined, {
       month: "short",
@@ -708,13 +709,15 @@ function MonthsPanel({ startDate, endDate, setStartDate, setEndDate }) {
 
   return (
     <div className="w-[min(920px,calc(100vw-64px))] min-h-[600px]">
-      <div className="mb-6 text-center text-[18px] font-semibold text-[#222222]">
+      {/* REMOVE any extra segmented tabs here — they are already rendered by the parent */}
+
+      <div className="mb-6 text-center text-[20px] font-semibold text-[#222222]">
         When’s your trip?
       </div>
 
       <div
         ref={dialRef}
-        className="mx-auto my-6 h-80 w-80 rounded-full relative flex items-center justify-center"
+        className="relative mx-auto my-6 h-[340px] w-[340px] select-none rounded-full"
         role="slider"
         aria-label="Select number of months"
         aria-valuemin={1}
@@ -727,27 +730,24 @@ function MonthsPanel({ startDate, endDate, setStartDate, setEndDate }) {
           // from -90deg => 0deg at top
           background: `conic-gradient(from -90deg, #FF385C ${angleFromTop}deg, rgba(0,0,0,0.06) ${angleFromTop}deg)`,
           boxShadow:
-            "inset 0 10px 25px rgba(0,0,0,.08), inset 0 -6px 12px rgba(0,0,0,.06), 0 2px 12px rgba(0,0,0,.06)",
+            "inset 0 18px 40px rgba(0,0,0,.10), inset 0 -10px 18px rgba(0,0,0,.08), 0 10px 30px rgba(0,0,0,.10)",
         }}
       >
-        <div className="pointer-events-none absolute -top-2 left-4 h-24 w-24 rounded-full bg-white/30 blur-xl" />
-
-        <div className="h-40 w-40 rounded-full bg-white shadow-md flex items-center justify-center text-center">
-          <div>
-            <div className="text-4xl font-bold text-[#222222]">{months}</div>
-            <div className="text-sm text-[#717171]">
-              {months === 1 ? "month" : "months"}
-            </div>
+        {/* Center puck */}
+        <div className="absolute left-1/2 top-1/2 h-[168px] w-[168px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_16px_32px_rgba(0,0,0,.18),_inset_0_-2px_0_rgba(0,0,0,.04)] flex items-center justify-center">
+          <div className="text-center">
+            <div className="text-[56px] leading-none font-extrabold text-[#111]">{months}</div>
+            <div className="mt-1 text-sm text-[#6B7280]">{months === 1 ? "month" : "months"}</div>
           </div>
         </div>
 
+        {/* 12 tick dots on same radius */}
         {Array.from({ length: 12 }).map((_, i) => {
           const degFromTop = (i / 12) * 360;
           const rad = (degFromTop * Math.PI) / 180;
           const x = radius * Math.sin(rad);
           const y = -radius * Math.cos(rad);
-          const darker = i <= months - 1;
-
+          const isFilled = i <= months - 1;
           return (
             <span
               key={i}
@@ -756,34 +756,37 @@ function MonthsPanel({ startDate, endDate, setStartDate, setEndDate }) {
                 left: `calc(50% + ${x}px)`,
                 top: `calc(50% + ${y}px)`,
                 transform: "translate(-50%, -50%)",
-                backgroundColor: darker ? "#9CA3AF" : "#E5E7EB",
+                backgroundColor: isFilled ? "rgba(17,24,39,0.35)" : "rgba(17,24,39,0.18)",
               }}
             />
           );
         })}
 
+        {/* Handle: anchor to dial center, then rotate/translate */}
         <div
           className={[
-            "absolute h-10 w-10 rounded-full bg-white shadow-md border-4 border-[#FF385C] transition-transform",
+            "absolute rounded-full bg-white shadow-[0_6px_16px_rgba(0,0,0,.25),_inset_0_-2px_0_rgba(0,0,0,.06)] transition-transform",
             dragging ? "cursor-grabbing" : "cursor-grab",
           ].join(" ")}
-          // CSS transform angles are 0deg at 3 o’clock; convert by -90
           style={{
-            transform: `rotate(${angleFromTop - 90}deg) translate(${radius}px) rotate(-${
-              angleFromTop - 90
-            }deg)`,
+            height: `${handleSize}px`,
+            width: `${handleSize}px`,
+            left: "50%",
+            top: "50%",
+            transform: `translate(-50%, -50%) rotate(${angleFromTop - 90}deg) translate(${radius}px) rotate(-${angleFromTop - 90}deg)`,
+            border: "5px solid #ff3e66",
+            zIndex: 1,
           }}
         />
       </div>
 
-      <div className="mt-8 text-center text-[15px] text-[#222222]">
-        <span className="underline">{fmt(startDate || baseStart)}</span>
+      <div className="mt-6 text-center text-[15px] text-[#222222]">
+        <span className="underline underline-offset-[6px] decoration-[1.5px] decoration-black/60">
+          {fmt(startDate || baseStart)}
+        </span>
         <span className="mx-2 text-[#717171]">to</span>
-        <span className="underline">
-          {fmt(
-            endDate ||
-              new Date(baseStart.getFullYear(), baseStart.getMonth() + months, 1)
-          )}
+        <span className="underline underline-offset-[6px] decoration-[1.5px] decoration-black/60">
+          {fmt(endDate || new Date(baseStart.getFullYear(), baseStart.getMonth() + months, 1))}
         </span>
       </div>
     </div>
