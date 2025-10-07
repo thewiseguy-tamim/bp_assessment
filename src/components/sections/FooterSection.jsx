@@ -1,11 +1,6 @@
 import React from "react";
 import { Globe, DollarSign, Facebook, Instagram, Twitter } from "lucide-react";
 
-/**
- * FooterSection
- * - Three columns: Support, Hosting, Airbnb
- * - Bottom bar with legal links, selector chips, and social icons
- */
 export default function FooterSection() {
   const cols = [
     {
@@ -48,45 +43,145 @@ export default function FooterSection() {
     },
   ];
 
+ const tabs = [
+  { id: "tips", label: "Travel tips & inspiration" },
+  { id: "apts", label: "Airbnb-friendly apartments" },
+];
+
+const [activeTab, setActiveTab] = React.useState("tips");
+
+const inspirationItems = {
+  tips: [
+    { title: "Family travel hub", desc: "Tips and inspiration" },
+    { title: "Family budget travel", desc: "Get there for less" },
+    {
+      title: "Vacation ideas for any budget",
+      desc: "Make it special without making it spendy",
+    },
+    {
+      title: "Travel Europe on a budget",
+      desc: "How to take the kids to Europe for less",
+    },
+    { title: "Outdoor adventure", desc: "Explore nature with the family" },
+    {
+      title: "Bucket list national parks",
+      desc: "Must-see parks for family travel",
+    },
+  ],
+  apts: [], // Intentionally empty
+};
+
+
   return (
     <footer className="w-full bg-white">
-      <div className="mx-auto max-w-[1760px] px-4 sm:px-6 py-10 sm:py-12 border-t border-[#EEEEEE]">
-        {/* Columns */}
-        <div className="grid grid-cols-1 gap-8 sm:grid-cols-2 lg:grid-cols-3">
-          {cols.map((col) => (
-            <div key={col.title}>
-              <div className="mb-3 text-[15px] font-semibold text-[#222222]">
-                {col.title}
-              </div>
-              <ul className="space-y-2">
-                {col.links.map((l) => (
-                  <li key={l}>
-                    <a
-                      href="#"
-                      className="text-[13px] text-[#222222] hover:underline"
-                    >
-                      {l}
-                    </a>
-                  </li>
-                ))}
-              </ul>
+      <div className="mx-auto max-w-[1760px] px-4 sm:px-6 border-t border-[#EEEEEE]">
+        {/* Inspiration for future getaways */}
+        <section className="py-8 sm:py-10">
+          <h2 className="text-[22px] sm:text-[26px] font-semibold text-[#222222]">
+            Inspiration for future getaways
+          </h2>
+
+          {/* Tabs */}
+          <div className="mt-5 border-b border-[#EAEAEA]">
+            <div role="tablist" className="flex gap-6 overflow-x-auto">
+              {tabs.map((t) => {
+                const isActive = t.id === activeTab;
+                return (
+                  <button
+                    key={t.id}
+                    role="tab"
+                    aria-selected={isActive}
+                    onClick={() => setActiveTab(t.id)}
+                    className={[
+                      "whitespace-nowrap pb-3 text-[15px] transition-colors",
+                      isActive
+                        ? "text-[#222222] border-b-2 border-[#222222] font-medium"
+                        : "text-[#717171] hover:text-[#222222]",
+                    ].join(" ")}
+                  >
+                    {t.label}
+                  </button>
+                );
+              })}
             </div>
-          ))}
-        </div>
+          </div>
+
+          {/* Items under active tab */}
+          <div className="mt-6 grid grid-cols-1 gap-y-6 gap-x-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
+            {inspirationItems[activeTab].map((it) => (
+              <a
+                key={it.title}
+                href="#"
+                className="group block"
+                aria-label={it.title}
+              >
+                <div className="text-[15px] font-semibold text-[#222222] group-hover:underline">
+                  {it.title}
+                </div>
+                <div className="mt-1 text-[13px] text-[#717171]">
+                  {it.desc}
+                </div>
+              </a>
+            ))}
+          </div>
+        </section>
+
+        {/* Link columns */}
+        <section className="pt-6 sm:pt-10 pb-6 sm:pb-12">
+          <div className="grid grid-cols-1 gap-10 sm:grid-cols-3">
+            {cols.map((col) => (
+              <div key={col.title}>
+                <div className="mb-3 text-[15px] font-semibold text-[#222222]">
+                  {col.title}
+                </div>
+                <ul className="space-y-3">
+                  {col.links.map((l) => (
+                    <li key={l}>
+                      <a
+                        href="#"
+                        className="text-[14px] text-[#222222] hover:underline"
+                      >
+                        {l}
+                      </a>
+                    </li>
+                  ))}
+                </ul>
+              </div>
+            ))}
+          </div>
+        </section>
 
         {/* Bottom bar */}
-        <div className="mt-8 border-t border-[#EEEEEE] pt-4">
-          <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <div className="border-t border-[#EEEEEE]">
+          <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between py-4">
+            {/* Left: legal */}
             <div className="text-[13px] text-[#717171]">
               © {new Date().getFullYear()} Airbnb, Inc. ·
-              <a href="#" className="ml-2 hover:underline text-[#222222]">Terms</a> ·
-              <a href="#" className="ml-2 hover:underline text-[#222222]">Sitemap</a> ·
-              <a href="#" className="ml-2 hover:underline text-[#222222]">Privacy</a> ·
-              <a href="#" className="ml-2 hover:underline text-[#222222]">Your Privacy Choices</a>
+              <a href="#" className="ml-2 hover:underline text-[#222222]">
+                Terms
+              </a>{" "}
+              ·
+              <a href="#" className="ml-2 hover:underline text-[#222222]">
+                Sitemap
+              </a>{" "}
+              ·
+              <a href="#" className="ml-2 hover:underline text-[#222222]">
+                Privacy
+              </a>{" "}
+              ·
+              <a href="#" className="ml-2 hover:underline text-[#222222] inline-flex items-center gap-1">
+                Your Privacy Choices
+                <span
+                  aria-hidden
+                  className="ml-1 inline-flex h-[16px] min-w-[26px] items-center justify-center rounded bg-[#1A73E8] px-1 text-[10px] font-semibold text-white"
+                >
+                  ⓘ
+                </span>
+              </a>
             </div>
 
+            {/* Right: chips and socials */}
             <div className="flex items-center gap-2">
-              {/* Language / currency / region */}
               <button
                 type="button"
                 className="inline-flex items-center gap-2 rounded-full px-3 py-2 text-[13px] text-[#222222] hover:bg-[#F7F7F7]"
@@ -104,7 +199,6 @@ export default function FooterSection() {
                 USD
               </button>
 
-              {/* Social icons */}
               <div className="ml-1 flex items-center gap-1">
                 <a
                   href="#"
