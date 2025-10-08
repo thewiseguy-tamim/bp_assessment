@@ -1,4 +1,4 @@
-import React, { useEffect, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import Logo from "../common/Logo";
 import SearchBar from "./SearchBar";
 import {
@@ -16,17 +16,24 @@ import {
 
 const cls = (...a) => a.filter(Boolean).join(" ");
 
+// Control the visual morph (unchanged)
+const WIDE_WIDTH = 980;   // px when fully expanded (top of page)
+const PILL_WIDTH = 640;   // px when fully collapsed
+const SWITCH_AT = 0.35;   // threshold to swap SearchBar -> Pill (0..1)
+
+// New: a concrete height for the tabs row (used for real height collapse)
+const TAB_ROW_H = 36;     // px of the tabs row content (tweak if needed)
+
 export default function NavbarDesktop({
-  isScrolled,
+  progress,        // 0..1 (0 wide / 1 pill) – passed from Navbar.jsx
   activeTab,
   onChangeTab,
-  forceExpanded,
   onCompactClick,
 }) {
   const navRef = useRef(null);
   const [indicator, setIndicator] = useState({ left: 0 });
 
-  // Slide the 3px underline to the active tab
+  // Keep underline in sync
   useEffect(() => {
     const root = navRef.current;
     if (!root) return;
@@ -37,143 +44,121 @@ export default function NavbarDesktop({
     const rect = el.getBoundingClientRect();
     const parent = root.getBoundingClientRect();
     setIndicator({ left: rect.left - parent.left + rect.width / 2 - 20 });
-  }, [activeTab, isScrolled]);
+  }, [activeTab]);
 
-  // User menu with click outside to close
-  const [menuOpen, setMenuOpen] = useState(false);
-  const menuBtnRef = useRef(null);
-  const menuRef = useRef(null);
+  // Interpolated width of the center search container
+  const currentWidth = useMemo(() => {
+    const t = Math.min(1, Math.max(0, progress));
+    return Math.round(WIDE_WIDTH + (PILL_WIDTH - WIDE_WIDTH) * t);
+  }, [progress]);
 
-  useEffect(() => {
-    const onClick = (e) => {
-      if (!menuOpen) return;
-      if (menuRef.current?.contains(e.target) || menuBtnRef.current?.contains(e.target)) return;
-      setMenuOpen(false);
+  // Tabs motion (fade + real height collapse so the search moves up)
+  const tabsStyle = useMemo(() => {
+    const t = Math.min(1, Math.max(0, progress));
+    const opacity = 1 - Math.min(1, t * 1.05);         // fade out slightly faster
+    const maxH = Math.max(0, (1 - t) * TAB_ROW_H);      // 36px -> 0px
+    return {
+      opacity,
+      maxHeight: `${maxH}px`,
+      overflow: "hidden",
+      transition: "max-height 180ms ease, opacity 180ms linear",
+      pointerEvents: t > 0.9 ? "none" : "auto",
     };
-    document.addEventListener("mousedown", onClick, true);
-    return () => document.removeEventListener("mousedown", onClick, true);
-  }, [menuOpen]);
+  }, [progress]);
 
-  const showCompact = isScrolled && !forceExpanded;
-  const showExpandedRow = !isScrolled || forceExpanded;
+  // SearchBar/pill container: reduce top margin as tabs collapse so it slides up
+  const searchContainerStyle = useMemo(() => {
+    const t = Math.min(1, Math.max(0, progress));
+    const baseMt = 8;                        // mt-2 = 8px baseline
+    const mt = Math.max(0, baseMt * (1 - t)); // 8px -> 0px
+    return {
+      width: currentWidth,
+      marginTop: `${mt}px`,
+      transition: "width 150ms linear, margin-top 150ms linear",
+    };
+  }, [progress, currentWidth]);
+
+  const showSearchBar = progress < SWITCH_AT;
 
   return (
-    <div className="mx-auto max-w-[1760px] px-6">
-      {/* Top row: logo + center (animated: tabs <-> pill) + actions */}
-      <div className="flex items-center justify-between gap-4">
-        <div className="shrink-0">
-          <Logo size="lg" />
-        </div>
+    <div className="mx-auto flex max-w-[1760px] items-start justify-between gap-4 px-6">
+      {/* Left */}
+      <div className="shrink-0 pt-1">
+        <Logo size="lg" />
+      </div>
 
-        {/* Center container keeps stable height and cross-fades content */}
-        <div className="relative flex-1 flex justify-center min-h-[48px]">
-          {/* Tabs layer */}
-          <nav
-            ref={navRef}
-            className={cls(
-              "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2",
-              "transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
-              showCompact ? "opacity-0 translate-y-1 scale-95 pointer-events-none" : "opacity-100 translate-y-0 scale-100"
-            )}
-            aria-label="Primary"
-            aria-hidden={showCompact ? "true" : "false"}
-          >
-            <ul className="flex items-center gap-8">
-              <Tab
-                icon={<Home className="h-6 w-6" />}
-                label="Homes"
-                active={activeTab === "homes"}
-                onClick={() => onChangeTab?.("homes")}
-              />
-              <Tab
-                icon={<PartyPopper className="h-6 w-6" />}
-                label="Experiences"
-                badge="NEW"
-                active={activeTab === "experiences"}
-                onClick={() => onChangeTab?.("experiences")}
-              />
-              <Tab
-                icon={<ConciergeBell className="h-6 w-6" />}
-                label="Services"
-                badge="NEW"
-                active={activeTab === "services"}
-                onClick={() => onChangeTab?.("services")}
-              />
-            </ul>
-            <div
-              className="pointer-events-none absolute -bottom-2 h-[3px] w-10 rounded-full bg-black transition-transform duration-300"
-              style={{ transform: `translateX(${indicator.left}px)` }}
-              aria-hidden
+      {/* Center column: tabs (fade + height collapse) above, resizable search below */}
+      <div className="flex flex-1 flex-col items-center">
+        {/* Icon tabs row (always mounted; fades and collapses height) */}
+        <nav
+          ref={navRef}
+          className="relative will-change-[opacity] transition-opacity duration-150 ease-linear"
+          style={tabsStyle}
+          aria-label="Primary"
+          aria-hidden={tabsStyle.opacity <= 0.02 ? "true" : "false"}
+        >
+          <ul className="flex items-center gap-8">
+            <Tab
+              icon={<Home className="h-6 w-6" />}
+              label="Homes"
+              active={activeTab === "homes"}
+              onClick={() => onChangeTab?.("homes")}
             />
-          </nav>
-
-          {/* Compact pill layer */}
+            <Tab
+              icon={<PartyPopper className="h-6 w-6" />}
+              label="Experiences"
+              badge="NEW"
+              active={activeTab === "experiences"}
+              onClick={() => onChangeTab?.("experiences")}
+            />
+            <Tab
+              icon={<ConciergeBell className="h-6 w-6" />}
+              label="Services"
+              badge="NEW"
+              active={activeTab === "services"}
+              onClick={() => onChangeTab?.("services")}
+            />
+          </ul>
+          {/* 3px underline */}
           <div
-            className={cls(
-              "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-[640px]",
-              "transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
-              showCompact ? "opacity-100 translate-y-0 scale-100" : "opacity-0 -translate-y-1 scale-95 pointer-events-none"
-            )}
-            aria-hidden={showCompact ? "false" : "true"}
-          >
+            className="pointer-events-none mx-auto mt-1 h-[3px] w-10 rounded-full bg-black transition-transform duration-300"
+            style={{ transform: `translateX(${indicator.left}px)` }}
+            aria-hidden
+          />
+        </nav>
+
+        {/* Resizable search area below tabs (width shrinks with scroll) and slides up */}
+        <div
+          className="mt-2 transition-[width,margin-top] duration-150 ease-linear"
+          style={searchContainerStyle}
+        >
+          {showSearchBar ? (
+            <SearchBar onSubmit={() => {}} onChange={() => {}} />
+          ) : (
             <CollapsedPill onClick={onCompactClick} />
-          </div>
-        </div>
-
-        {/* Right actions */}
-        <div className="flex items-center gap-3">
-          <button
-            type="button"
-            className="text-[15px] text-[#222222] hover:bg-[#F7F7F7] px-3 py-2 rounded-full transition-colors"
-          >
-            Become a host
-          </button>
-
-          <button
-            type="button"
-            aria-label="Language and region"
-            className="h-10 w-10 inline-flex items-center justify-center rounded-full hover:bg-[#F7F7F7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/10"
-          >
-            <Globe className="h-5 w-5 text-[#222222]" />
-          </button>
-
-          <button
-            type="button"
-            aria-haspopup="menu"
-            aria-expanded={menuOpen ? "true" : "false"}
-            ref={menuBtnRef}
-            onClick={() => setMenuOpen((v) => !v)}
-            className="inline-flex items-center gap-2 rounded-full border border-[#DDDDDD] px-3 py-2 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/10"
-          >
-            <Menu className="h-5 w-5 text-[#222222]" />
-            <User className="h-6 w-6 text-[#717171]" />
-          </button>
-
-          <UserMenu open={menuOpen} anchorRef={menuBtnRef} menuRef={menuRef} onClose={() => setMenuOpen(false)} />
+          )}
         </div>
       </div>
 
-      {/* Full SearchBar row — animated expand/collapse, still part of header */}
-      <AnimatedRow show={showExpandedRow}>
-        <div className="mx-auto max-w-[980px]">
-          <SearchBar className="mt-1" onSubmit={() => {}} onChange={() => {}} />
-        </div>
-      </AnimatedRow>
-    </div>
-  );
-}
+      {/* Right actions */}
+      <div className="flex items-start gap-3 pt-1">
+        <button
+          type="button"
+          className="rounded-full px-3 py-2 text-[15px] text-[#222222] transition-colors hover:bg-[#F7F7F7]"
+        >
+          Become a host
+        </button>
 
-function AnimatedRow({ show, children }) {
-  // Smooth height + opacity animation for the full SearchBar row
-  return (
-    <div
-      className={cls(
-        "overflow-hidden transition-[max-height,opacity] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
-        show ? "opacity-100" : "opacity-0"
-      )}
-      style={{ maxHeight: show ? 120 : 0 }}
-    >
-      <div className="pt-3">{children}</div>
+        <button
+          type="button"
+          aria-label="Language and region"
+          className="inline-flex h-10 w-10 items-center justify-center rounded-full hover:bg-[#F7F7F7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/10"
+        >
+          <Globe className="h-5 w-5 text-[#222222]" />
+        </button>
+
+        <UserMenuButton />
+      </div>
     </div>
   );
 }
@@ -185,8 +170,8 @@ function Tab({ icon, label, badge, active, onClick }) {
         type="button"
         onClick={onClick}
         className={cls(
-          "group inline-flex items-center gap-2 text-[15px] font-medium transition-colors",
-          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/10 rounded-md",
+          "group inline-flex items-center gap-2 rounded-md text-[15px] font-medium transition-colors",
+          "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/10",
           active ? "text-black" : "text-[#717171] hover:text-black"
         )}
         aria-current={active ? "page" : undefined}
@@ -214,7 +199,7 @@ function CollapsedPill({ onClick }) {
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/10"
       )}
     >
-      <div className="flex items-center justify-between px-4 py-3">
+      <div className="flex items-center justify-between px-5 py-3">
         <div className="flex items-center gap-4 text-[14px] text-[#222222]">
           <span>Anywhere</span>
           <span className="h-5 w-px bg-[#DDDDDD]" />
@@ -223,10 +208,7 @@ function CollapsedPill({ onClick }) {
           <span>Add guests</span>
         </div>
         <span
-          className={cls(
-            "ml-2 inline-flex h-10 w-10 items-center justify-center rounded-full",
-            "bg-[#FF385C] text-white shadow-md transition hover:bg-[#E31C5F]"
-          )}
+          className="ml-2 inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#FF385C] text-white shadow-md transition hover:bg-[#E31C5F]"
           aria-hidden
         >
           <svg viewBox="0 0 24 24" className="h-5 w-5">
@@ -241,50 +223,80 @@ function CollapsedPill({ onClick }) {
   );
 }
 
-function UserMenu({ open, anchorRef, menuRef, onClose }) {
-  if (!open) return null;
-  const rect = anchorRef.current?.getBoundingClientRect();
+/* Simple user menu button + anchored menu (unchanged) */
+function UserMenuButton() {
+  const [open, setOpen] = useState(false);
+  const btnRef = useRef(null);
+  const menuRef = useRef(null);
+
+  useEffect(() => {
+    const onClick = (e) => {
+      if (!open) return;
+      if (menuRef.current?.contains(e.target) || btnRef.current?.contains(e.target)) return;
+      setOpen(false);
+    };
+    document.addEventListener("mousedown", onClick, true);
+    return () => document.removeEventListener("mousedown", onClick, true);
+  }, [open]);
+
+  const rect = btnRef.current?.getBoundingClientRect();
   const style = rect
     ? { position: "fixed", top: rect.bottom + 8, left: rect.right - 280, zIndex: 60 }
     : {};
 
   return (
-    <div
-      ref={menuRef}
-      style={style}
-      className="w-[280px] rounded-2xl bg-white shadow-xl ring-1 ring-black/5 transition-opacity"
-      role="menu"
-      aria-label="User menu"
-    >
-      <div className="p-2">
-        <Item icon={<HelpCircle className="h-5 w-5" />} label="Help Center" onClick={onClose} />
-        <Divider />
+    <>
+      <button
+        type="button"
+        ref={btnRef}
+        aria-haspopup="menu"
+        aria-expanded={open ? "true" : "false"}
+        onClick={() => setOpen((v) => !v)}
+        className="inline-flex items-center gap-2 rounded-full border border-[#DDDDDD] px-3 py-2 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/10"
+      >
+        <Menu className="h-5 w-5 text-[#222222]" />
+        <User className="h-6 w-6 text-[#717171]" />
+      </button>
+
+      {open && (
         <div
-          className="flex items-start gap-3 rounded-lg p-3 hover:bg-[#F7F7F7] cursor-pointer"
-          role="menuitem"
-          onClick={onClose}
+          ref={menuRef}
+          style={style}
+          className="w-[280px] rounded-2xl bg-white shadow-xl ring-1 ring-black/5"
+          role="menu"
+          aria-label="User menu"
         >
-          <div className="min-w-0">
-            <div className="text-[14px] font-semibold text-[#222222]">Become a host</div>
-            <div className="text-[13px] text-[#717171]">
-              It&apos;s easy to start hosting and earn extra income.
+          <div className="p-2">
+            <Item icon={<HelpCircle className="h-5 w-5" />} label="Help Center" onClick={() => setOpen(false)} />
+            <Divider />
+            <div
+              className="flex cursor-pointer items-start gap-3 rounded-lg p-3 hover:bg-[#F7F7F7]"
+              role="menuitem"
+              onClick={() => setOpen(false)}
+            >
+              <div className="min-w-0">
+                <div className="text-[14px] font-semibold text-[#222222]">Become a host</div>
+                <div className="text-[13px] text-[#717171]">
+                  It&apos;s easy to start hosting and earn extra income.
+                </div>
+              </div>
+              <div className="ml-auto">
+                <img
+                  src="https://images.unsplash.com/photo-1520975922284-9bcd39f0a7c9?w=36&h=36&fit=crop&auto=format"
+                  alt=""
+                  className="h-9 w-9 rounded-lg object-cover"
+                />
+              </div>
             </div>
-          </div>
-          <div className="ml-auto">
-            <img
-              src="https://images.unsplash.com/photo-1520975922284-9bcd39f0a7c9?w=36&h=36&fit=crop&auto=format"
-              alt=""
-              className="h-9 w-9 rounded-lg object-cover"
-            />
+            <Item icon={<Share2 className="h-5 w-5" />} label="Refer a Host" onClick={() => setOpen(false)} />
+            <Item icon={<Users className="h-5 w-5" />} label="Find a co-host" onClick={() => setOpen(false)} />
+            <Item icon={<Gift className="h-5 w-5" />} label="Gift cards" onClick={() => setOpen(false)} />
+            <Divider />
+            <Item label="Log in or sign up" onClick={() => setOpen(false)} />
           </div>
         </div>
-        <Item icon={<Share2 className="h-5 w-5" />} label="Refer a Host" onClick={onClose} />
-        <Item icon={<Users className="h-5 w-5" />} label="Find a co-host" onClick={onClose} />
-        <Item icon={<Gift className="h-5 w-5" />} label="Gift cards" onClick={onClose} />
-        <Divider />
-        <Item label="Log in or sign up" onClick={onClose} />
-      </div>
-    </div>
+      )}
+    </>
   );
 }
 

@@ -1,9 +1,13 @@
-import React, { useMemo, useRef, useState } from "react";
-import { ChevronRight, Calendar } from "lucide-react";
+import React, { useMemo, useRef, useState, useEffect, useCallback } from "react";
+import { ChevronLeft, ChevronRight, Calendar } from "lucide-react";
 
 export default function FlexiblePanel({ setStartDate, setEndDate }) {
   const [length, setLength] = useState("weekend");
   const monthsRef = useRef(null);
+
+  // Scroll affordances
+  const [canLeft, setCanLeft] = useState(false);
+  const [canRight, setCanRight] = useState(true);
 
   const months = useMemo(() => {
     const now = new Date();
@@ -20,6 +24,29 @@ export default function FlexiblePanel({ setStartDate, setEndDate }) {
     });
   }, []);
 
+  const updateScrollState = useCallback(() => {
+    const el = monthsRef.current;
+    if (!el) return;
+    const max = el.scrollWidth - el.clientWidth;
+    const sl = el.scrollLeft;
+    setCanLeft(sl > 2);
+    setCanRight(sl < max - 2);
+  }, []);
+
+  useEffect(() => {
+    updateScrollState();
+    const el = monthsRef.current;
+    if (!el) return;
+    const onScroll = () => updateScrollState();
+    el.addEventListener("scroll", onScroll, { passive: true });
+    window.addEventListener("resize", updateScrollState);
+    return () => {
+      el.removeEventListener("scroll", onScroll);
+      window.removeEventListener("resize", updateScrollState);
+    };
+  }, [updateScrollState]);
+
+  // Pick a month -> set dates based on selected length
   const chooseMonth = (d) => {
     const s = new Date(d.getFullYear(), d.getMonth(), 1);
     const nights = length === "weekend" ? 2 : length === "week" ? 7 : 30;
@@ -29,13 +56,36 @@ export default function FlexiblePanel({ setStartDate, setEndDate }) {
     setEndDate(e);
   };
 
-  const scrollBy = (dir = 1) => {
+  // Smooth paging by ~80% of the visible width (feels like a carousel)
+  const scrollStep = () => {
+    const el = monthsRef.current;
+    if (!el) return 0;
+    return Math.min(600, el.clientWidth * 0.8);
+  };
+
+  const scrollByDir = (dir = 1) => {
     const el = monthsRef.current;
     if (!el) return;
-    el.scrollBy({
-      left: dir * Math.min(600, el.clientWidth * 0.8),
-      behavior: "smooth",
-    });
+    el.scrollBy({ left: dir * scrollStep(), behavior: "smooth" });
+  };
+
+  // Trackpad/mouse wheel -> slide horizontally
+  const handleWheel = (e) => {
+    const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
+    if (Math.abs(delta) < 8) return;
+    e.preventDefault();
+    scrollByDir(delta > 0 ? 1 : -1);
+  };
+
+  // Keyboard arrows -> slide
+  const handleKeyDown = (e) => {
+    if (e.key === "ArrowRight") {
+      e.preventDefault();
+      scrollByDir(1);
+    } else if (e.key === "ArrowLeft") {
+      e.preventDefault();
+      scrollByDir(-1);
+    }
   };
 
   return (
@@ -69,30 +119,57 @@ export default function FlexiblePanel({ setStartDate, setEndDate }) {
         })}
       </div>
 
-      <div className="mb-6 text-center text-[24px] font-bold text-[#222222]">
+      <div className="mb-6 text-center text-[22px] font-semibold text-[#222222]">
         Go anytime
       </div>
 
-      <div className="relative pr-[56px]">
+      {/* Slider area */}
+      <div className="relative px-[56px]">
+        {/* Left arrow */}
         <button
           type="button"
-          onClick={() => scrollBy(1)}
-          aria-label="Scroll months"
-          className="absolute right-0 top-1/2 z-10 -translate-y-1/2 translate-x-1/2 rounded-full border border-[#DDDDDD] bg-white p-3 shadow hover:shadow-md"
+          onClick={() => scrollByDir(-1)}
+          aria-label="Scroll months left"
+          className={[
+            "absolute left-0 top-1/2 z-10 -translate-y-1/2 -translate-x-1/2 rounded-full border border-[#DDDDDD] bg-white p-3 shadow transition",
+            canLeft ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none",
+          ].join(" ")}
+        >
+          <ChevronLeft className="h-5 w-5 text-[#222222]" />
+        </button>
+        {/* Right arrow */}
+        <button
+          type="button"
+          onClick={() => scrollByDir(1)}
+          aria-label="Scroll months right"
+          className={[
+            "absolute right-0 top-1/2 z-10 -translate-y-1/2 translate-x-1/2 rounded-full border border-[#DDDDDD] bg-white p-3 shadow transition",
+            canRight ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none",
+          ].join(" ")}
         >
           <ChevronRight className="h-5 w-5 text-[#222222]" />
         </button>
+
+        {/* Edge fades */}
+        <div className="pointer-events-none absolute left-0 top-0 h-full w-10 bg-gradient-to-r from-white to-transparent" />
         <div className="pointer-events-none absolute right-0 top-0 h-full w-10 bg-gradient-to-l from-white to-transparent" />
 
+        {/* Scroll container */}
         <div
           ref={monthsRef}
-          className="flex gap-4 overflow-x-auto pb-2 pr-16 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+          className="flex gap-4 overflow-x-auto pb-2 pr-2 pl-2 outline-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
+          tabIndex={0}
+          onWheel={handleWheel}
+          onKeyDown={handleKeyDown}
+          role="listbox"
+          aria-label="Pick a month"
         >
           {months.map((m) => (
             <button
               key={m.id}
               type="button"
               onClick={() => chooseMonth(m.date)}
+              role="option"
               className="w-[140px] h-[160px] shrink-0 rounded-[16px] border border-[#DDDDDD] bg-white p-7 text-center transition hover:shadow-[0_4px_12px_rgba(0,0,0,0.15)] hover:-translate-y-[4px] hover:border-black"
             >
               <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-[#F7F7F7]">

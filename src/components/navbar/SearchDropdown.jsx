@@ -194,6 +194,7 @@ export default function SearchDropdown({
 
           {(active === "checkin" || active === "checkout" || active === "when") && dateTab === "dates" && (
             <DatesPanel
+              key={`desktop-${dateTab}`}
               leftMonth={leftMonth}
               rightMonth={rightMonth}
               startDate={startDate}
@@ -282,6 +283,7 @@ export default function SearchDropdown({
 
                 {dateTab === "dates" && (
                   <DatesPanel
+                    key={`mobile-${dateTab}`}
                     leftMonth={leftMonth}
                     rightMonth={null}     // one month on mobile
                     startDate={startDate}

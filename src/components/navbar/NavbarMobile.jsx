@@ -1,25 +1,17 @@
 import React from "react";
 import Logo from "../common/Logo";
-import {
-  Globe,
-  Menu,
-  Search as SearchIcon,
-  Home,
-  PartyPopper,
-  ConciergeBell,
-} from "lucide-react";
+import { Globe, Menu, Search as SearchIcon, Home, PartyPopper, ConciergeBell } from "lucide-react";
 
 export default function NavbarMobile() {
   return (
     <>
-      {/* Top bar */}
-      <div className="mx-auto flex max-w-[1760px] items-center justify-between px-4">
+      <div className="mx-auto flex h-full max-w-[1760px] items-center justify-between px-4">
         <Logo size="md" withText={false} />
         <div className="flex items-center gap-2">
           <button
             type="button"
             aria-label="Language and region"
-            className="h-10 w-10 inline-flex items-center justify-center rounded-full hover:bg-[#F7F7F7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/10"
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full hover:bg-[#F7F7F7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/10"
           >
             <Globe className="h-5 w-5 text-[#222222]" />
           </button>
@@ -33,7 +25,6 @@ export default function NavbarMobile() {
         </div>
       </div>
 
-      {/* Search pill inside navbar */}
       <div className="px-4 pt-2">
         <button
           type="button"
@@ -47,7 +38,6 @@ export default function NavbarMobile() {
         </button>
       </div>
 
-      {/* Three icon tabs under the pill */}
       <div className="px-4 pb-2">
         <div className="grid grid-cols-3 gap-2 text-center">
           <MobileTab icon={<Home className="mx-auto h-6 w-6 text-[#222222]" />} label="Homes" />
