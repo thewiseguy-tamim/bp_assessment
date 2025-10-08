@@ -1,11 +1,37 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import Badge from "../common/Badge";
 import { Heart, ChevronLeft, ChevronRight } from "lucide-react";
-const FALLBACK_IMG = "https://placehold.co/1200x900?text=No+Image";
+
+// Square fallback to keep layout consistent
+const FALLBACK_IMG = "https://placehold.co/1200x1200?text=No+Image";
+
+// Curated open-source (Pixabay) property/interior images (stable URLs)
+const OPEN_IMAGE_POOL = [
+  "https://cdn.pixabay.com/photo/2016/12/07/12/57/living-room-1886626_1280.jpg",
+  "https://cdn.pixabay.com/photo/2017/04/16/20/25/bedroom-2235221_1280.jpg",
+  "https://cdn.pixabay.com/photo/2016/11/21/16/01/kitchen-1846128_1280.jpg",
+  "https://cdn.pixabay.com/photo/2016/11/29/06/15/adult-1867484_1280.jpg",
+  "https://cdn.pixabay.com/photo/2015/03/26/09/54/apartment-690086_1280.jpg",
+  "https://cdn.pixabay.com/photo/2017/03/28/12/16/apartment-2187186_1280.jpg",
+  "https://cdn.pixabay.com/photo/2016/11/29/09/32/architecture-1868667_1280.jpg",
+  "https://cdn.pixabay.com/photo/2017/03/28/12/16/apartment-2187187_1280.jpg",
+  "https://cdn.pixabay.com/photo/2017/08/01/01/08/architecture-2567431_1280.jpg",
+  "https://cdn.pixabay.com/photo/2017/08/10/04/20/bedroom-2615812_1280.jpg",
+  "https://cdn.pixabay.com/photo/2017/03/27/14/56/room-2178902_1280.jpg",
+  "https://cdn.pixabay.com/photo/2016/11/29/11/13/bedroom-1866666_1280.jpg",
+];
+
+// Deterministic index from id to vary images per card when no images provided
+const hashId = (val) => {
+  const s = String(val ?? "");
+  let h = 0;
+  for (let i = 0; i < s.length; i++) h = (h * 31 + s.charCodeAt(i)) >>> 0;
+  return h;
+};
 
 /**
  * PropertyCard
- * - Image carousel with dots
+ * - Square image carousel with dots
  * - Wishlist heart (persisted to localStorage)
  * - Optional "Guest favorite" badge
  * - Hover: image scale
@@ -40,17 +66,18 @@ export default function PropertyCard({
     type,
   } = property || {};
 
-  // Stable, sized fallback images to reduce Unsplash redirect/429 issues
+  // Stable, open-source fallback images (square-friendly via object-cover)
   const imageList = useMemo(() => {
     if (Array.isArray(images) && images.length) return images;
-    return [
-      "https://source.unsplash.com/1200x900/?apartment&sig=1",
-      "https://source.unsplash.com/1200x900/?interior&sig=2",
-      "https://source.unsplash.com/1200x900/?bedroom&sig=3",
-    ];
-  }, [images]);
+
+    const base = hashId(id);
+    const pick = (offset) => OPEN_IMAGE_POOL[(base + offset) % OPEN_IMAGE_POOL.length];
+    // Provide at least 3 images for the carousel UX
+    return [pick(0), pick(1), pick(2)];
+  }, [images, id]);
+
   const onImgError = (e) => {
-    // Swap to a guaranteed placeholder and end skeleton state
+    // Swap to guaranteed placeholder and end skeleton state
     e.currentTarget.onerror = null;
     e.currentTarget.src = FALLBACK_IMG;
     setLoaded(true);
@@ -118,7 +145,7 @@ export default function PropertyCard({
       if (next) set.add(id);
       else set.delete(id);
       localStorage.setItem(WISHLIST_KEY, JSON.stringify([...set]));
-    } catch {}
+    } catch {console.error();}
     onWishlistChange?.(id, next);
   };
 
@@ -136,14 +163,14 @@ export default function PropertyCard({
       }}
       aria-label={`${title || "Property"} in ${locationLine}`}
     >
-      {/* Media */}
+      {/* Media (square) */}
       <div
         className="relative w-full overflow-hidden rounded-xl"
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
       >
-        {/* 4:3 aspect without plugin */}
-        <div className="pt-[75%]" />
+        {/* 1:1 aspect without plugin */}
+        <div className="pt-[100%]" />
         <div className="absolute inset-0">
           {/* Current image (fade) */}
           <img
@@ -187,7 +214,6 @@ export default function PropertyCard({
               className={`h-5 w-5 ${
                 saved ? "text-[#FF385C]" : "text-[#222222]"
               }`}
-              // Fill for saved state
               style={saved ? { fill: "#FF385C", stroke: "white" } : {}}
             />
           </button>

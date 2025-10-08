@@ -44,14 +44,21 @@ function monthMatrix(monthDate) {
   return cells;
 }
 
-/* Force demo months to Oct/Nov 2025 to match the mock. Use new Date() for real-time behavior. */
+/* Force demo months to Oct/Nov 2025 to match your mock. Use new Date() for live behavior. */
 const DEMO_TODAY = new Date(2025, 9, 5);
 
 export default function MobileSearchSheet({ open, onClose }) {
+  // Debug fingerprint
+  useEffect(() => {
+    console.log("MobileSearchSheet v10 mounted", { at: new Date().toISOString() });
+  }, []);
+  useEffect(() => {
+    console.log("MobileSearchSheet v10 open:", open);
+  }, [open]);
+
   const [active, setActive] = useState("who"); // 'where' | 'when' | 'who'
   const [dateTab, setDateTab] = useState("dates");
 
-  // Local state
   const [query, setQuery] = useState("");
   const [location, setLocation] = useState(null);
   const [startDate, setStartDate] = useState(null);
@@ -59,13 +66,12 @@ export default function MobileSearchSheet({ open, onClose }) {
   const [guests, setGuests] = useState({ adults: 0, children: 0, infants: 0, pets: 0 });
   const [flexDays, setFlexDays] = useState(0); // 0 | 1 | 2 | 3
 
-  // Calendar nav (When)
   const [offset, setOffset] = useState(0);
   const today = useMemo(() => DEMO_TODAY, []);
   const leftMonth = useMemo(() => addMonths(startOfMonth(today), offset), [today, offset]);
   const rightMonth = useMemo(() => addMonths(leftMonth, 1), [leftMonth]);
 
-  // Keep onClose stable to avoid effect churn
+  // Stable onClose for Escape handler
   const onCloseRef = useRef(onClose);
   useEffect(() => {
     onCloseRef.current = onClose;
@@ -103,11 +109,11 @@ export default function MobileSearchSheet({ open, onClose }) {
           </div>
 
           <div className="flex items-center gap-2">
-            {/* I'm flexible pill in header (matches your screenshots) */}
+            {/* Visible on mobile too (match mock) */}
             <button
               type="button"
               onClick={() => setLocation({ id: "flexible", name: "I'm flexible" })}
-              className="hidden sm:inline-flex rounded-full border border-[#DDDDDD] px-3 py-1.5 text-[13px] font-medium text-[#222222] hover:bg-[#F7F7F7]"
+              className="inline-flex rounded-full border border-[#DDDDDD] px-3 py-1.5 text-[13px] font-medium text-[#222222] hover:bg-[#F7F7F7]"
             >
               I&apos;m flexible
             </button>
@@ -184,8 +190,8 @@ export default function MobileSearchSheet({ open, onClose }) {
         </div>
       </div>
 
-      {/* Sticky bottom action bar */}
-      <div className="fixed bottom-0 left-0 right-0 z-[1120] border-t border-[#EBEBEB] bg-white/95 px-4 py-3 backdrop-blur supports-[padding:max(0px)]">
+      {/* Bottom action bar: absolute inside the full-screen sheet (robust vs transform wrappers) */}
+      <div className="absolute bottom-0 left-0 right-0 z-[1120] border-t border-[#EBEBEB] bg-white/95 px-4 py-3 backdrop-blur supports-[padding:max(0px)]">
         <div className="mx-auto flex max-w-[560px] items-center justify-between">
           <button type="button" onClick={clearAll} className="text-[14px] underline text-[#222222]">
             Clear all
@@ -313,7 +319,7 @@ function WhenPanel({
   endDate,
   setStartDate,
   setEndDate,
-  offset: _offset, // not used directly
+  offset: _offset,
   setOffset,
   todayRef,
   flexDays,

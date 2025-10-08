@@ -6,12 +6,7 @@ import PropertyCard from "../cards/PropertyCard";
  * PopularHomesSection
  * - Mobile: horizontal snap carousel
  * - Desktop: wide horizontal scroller with arrow controls
- *
- * Props:
- * - title: string (e.g., "Popular homes in Kuala Lumpur")
- * - properties: Property[] (shape expected by PropertyCard)
- * - onPropertyClick?: (property) => void
- * - className?: string
+ * - Desktop shows exactly 7 columns without cutoffs
  */
 export default function PopularHomesSection({
   title,
@@ -29,7 +24,17 @@ export default function PopularHomesSection({
   };
 
   return (
-    <section className= {`w-full ${className}`}>
+    <section className={`w-full ${className}`}>
+      {/* Local CSS to force 7 columns on desktop */}
+      <style>{`
+        @media (min-width: 1024px) {
+          /* 7 columns with CSS vars for gap/columns */
+          [data-grid="homes"] .card-item {
+            width: calc((100% - (var(--gap, 20px) * (var(--cols, 7) - 1))) / var(--cols, 7)) !important;
+          }
+        }
+      `}</style>
+
       <div className="mx-auto max-w-[1760px] px-4 sm:px-6">
         <div className="mb-3 sm:mb-4 flex items-center justify-between">
           <h2 className="text-[18px] font-semibold text-[#222222]">{title}</h2>
@@ -60,11 +65,23 @@ export default function PopularHomesSection({
           ref={scrollRef}
           className="scroll-smooth overflow-x-auto pb-2 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
         >
-          <div className="flex gap-6 snap-x snap-mandatory">
+          {/* gap-5 -> 20px; expose as CSS var so calc can match it */}
+          <div
+            className="flex gap-5 snap-x snap-mandatory"
+            data-grid="homes"
+            style={{
+              // Ensure desktop is exactly 7 columns
+              // You can tweak gap here if needed (must match gap-5 => 20px)
+              "--cols": 7,
+              "--gap": "20px",
+            }}
+          >
             {properties.map((p) => (
               <div
                 key={p.id}
-                className="snap-start shrink-0 w-[260px] sm:w-[300px] lg:w-[320px]"
+                // Mobile/tablet: fixed widths for nice snap
+                // Desktop (lg+): width overridden by the CSS rule above to fit exactly 7 cols
+                className="snap-start shrink-0 w-[220px] sm:w-[240px] md:w-[260px] card-item"
                 data-card
               >
                 <PropertyCard property={p} onClick={() => onPropertyClick?.(p)} />
