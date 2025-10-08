@@ -16,13 +16,16 @@ import {
 
 const cls = (...a) => a.filter(Boolean).join(" ");
 
-// Control the visual morph (unchanged)
-const WIDE_WIDTH = 980;   // px when fully expanded (top of page)
-const PILL_WIDTH = 640;   // px when fully collapsed
-const SWITCH_AT = 0.35;   // threshold to swap SearchBar -> Pill (0..1)
+// Control the visual morph (do not change layout)
+const WIDE_WIDTH = 980;          // px when fully expanded (top of page)
+// Collapsed target fraction and safe minimum
+const COLLAPSED_FRAC = 0.38; // 38% of expanded width
+const MIN_COLLAPSED = 480; // safe floor so it never gets too tiny
+const PILL_WIDTH_TARGET = Math.max(MIN_COLLAPSED, Math.round(WIDE_WIDTH * COLLAPSED_FRAC));
+const SWITCH_AT = 0.35;          // threshold to swap SearchBar -> Pill (0..1)
 
-// New: a concrete height for the tabs row (used for real height collapse)
-const TAB_ROW_H = 36;     // px of the tabs row content (tweak if needed)
+// A concrete height for the tabs row (used to truly collapse height)
+const TAB_ROW_H = 36;            // px of the tabs row content (adjust if your tabs are taller)
 
 export default function NavbarDesktop({
   progress,        // 0..1 (0 wide / 1 pill) – passed from Navbar.jsx
@@ -49,7 +52,8 @@ export default function NavbarDesktop({
   // Interpolated width of the center search container
   const currentWidth = useMemo(() => {
     const t = Math.min(1, Math.max(0, progress));
-    return Math.round(WIDE_WIDTH + (PILL_WIDTH - WIDE_WIDTH) * t);
+    // Smoothly interpolate from wide to our 50% target
+    return Math.round(WIDE_WIDTH + (PILL_WIDTH_TARGET - WIDE_WIDTH) * t);
   }, [progress]);
 
   // Tabs motion (fade + real height collapse so the search moves up)
@@ -66,7 +70,7 @@ export default function NavbarDesktop({
     };
   }, [progress]);
 
-  // SearchBar/pill container: reduce top margin as tabs collapse so it slides up
+  // Search container: reduce the top margin proportionally so it slides up neatly
   const searchContainerStyle = useMemo(() => {
     const t = Math.min(1, Math.max(0, progress));
     const baseMt = 8;                        // mt-2 = 8px baseline
@@ -87,9 +91,9 @@ export default function NavbarDesktop({
         <Logo size="lg" />
       </div>
 
-      {/* Center column: tabs (fade + height collapse) above, resizable search below */}
+      {/* Center column: tabs above (fade + height collapse), resizable search below */}
       <div className="flex flex-1 flex-col items-center">
-        {/* Icon tabs row (always mounted; fades and collapses height) */}
+        {/* Icon tabs row */}
         <nav
           ref={navRef}
           className="relative will-change-[opacity] transition-opacity duration-150 ease-linear"
@@ -127,7 +131,7 @@ export default function NavbarDesktop({
           />
         </nav>
 
-        {/* Resizable search area below tabs (width shrinks with scroll) and slides up */}
+        {/* Resizable search area (width shrinks with scroll, slides up) */}
         <div
           className="mt-2 transition-[width,margin-top] duration-150 ease-linear"
           style={searchContainerStyle}
@@ -188,6 +192,7 @@ function Tab({ icon, label, badge, active, onClick }) {
   );
 }
 
+// Collapsed pill: three equal segments with vertical dividers and a Home icon on the left (inside the first segment)
 function CollapsedPill({ onClick }) {
   return (
     <button
@@ -199,19 +204,25 @@ function CollapsedPill({ onClick }) {
         "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/10"
       )}
     >
-      <div className="flex items-center justify-between px-5 py-3">
-        <div className="flex items-center gap-4 text-[14px] text-[#222222]">
-          <span>Anywhere</span>
-          <span className="h-5 w-px bg-[#DDDDDD]" />
-          <span>Anytime</span>
-          <span className="h-5 w-px bg-[#DDDDDD]" />
-          <span>Add guests</span>
+      <div className="flex items-center justify-between px-3 py-2.5">
+        {/* Three equal parts with vertical dividers */}
+        <div className="flex-1">
+          <div className="grid grid-cols-3 divide-x divide-[#DDDDDD] text-[14px] text-[#222222]">
+            <div className="flex items-center justify-center gap-2 px-3">
+              <Home className="h-4 w-4 text-[#222222]" />
+              <span>Anywhere</span>
+            </div>
+            <div className="flex items-center justify-center px-3">Anytime</div>
+            <div className="flex items-center justify-center px-3">Add guests</div>
+          </div>
         </div>
+
+        {/* Pink search circle */}
         <span
-          className="ml-2 inline-flex h-10 w-10 items-center justify-center rounded-full bg-[#FF385C] text-white shadow-md transition hover:bg-[#E31C5F]"
+          className="ml-2 inline-flex h-9 w-9 items-center justify-center rounded-full bg-[#FF385C] text-white shadow-md transition hover:bg-[#E31C5F]"
           aria-hidden
         >
-          <svg viewBox="0 0 24 24" className="h-5 w-5">
+          <svg viewBox="0 0 24 24" className="h-4.5 w-4.5">
             <path
               fill="currentColor"
               d="M15.5 14h-.79l-.28-.27A6.471 6.471 0 0 0 16 9.5 6.5 6.5 0 1 0 9.5 16c1.61 0 3.09-.59 4.23-1.57l.27.28v.79L20 21.5 21.5 20 15.5 14Zm-6 0C7.01 14 5 11.99 5 9.5S7.01 5 9.5 5 14 7.01 14 9.5 11.99 14 9.5 14Z"

@@ -6,7 +6,7 @@ export default function NavbarMobile() {
   return (
     <>
       <div className="mx-auto flex h-full max-w-[1760px] items-center justify-between px-4">
-        <Logo size="md" withText={false} />
+        {/* <Logo size="md" withText={false} />
         <div className="flex items-center gap-2">
           <button
             type="button"
@@ -22,7 +22,7 @@ export default function NavbarMobile() {
           >
             <Menu className="h-5 w-5 text-[#222222]" />
           </button>
-        </div>
+        </div> */}
       </div>
 
       <div className="px-4 pt-2">
@@ -38,7 +38,7 @@ export default function NavbarMobile() {
         </button>
       </div>
 
-      <div className="px-4 pb-2">
+      <div className="px-4 pb-2 mt-6">
         <div className="grid grid-cols-3 gap-2 text-center">
           <MobileTab icon={<Home className="mx-auto h-6 w-6 text-[#222222]" />} label="Homes" />
           <MobileTab

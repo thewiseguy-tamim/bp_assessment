@@ -1,17 +1,37 @@
-import React, { useCallback } from "react";
-import { ChevronLeft, ChevronRight } from "lucide-react";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
+
+// Inline chevron icon (no external dependency)
+function ChevronRightIcon({ className = "h-5 w-5" }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <polyline points="9 18 15 12 9 6" />
+    </svg>
+  );
+}
 
 // Local helpers
 const startOfMonth = (d) => new Date(d.getFullYear(), d.getMonth(), 1);
 const endOfMonth = (d) => new Date(d.getFullYear(), d.getMonth() + 1, 0);
 const isSameDay = (a, b) =>
-  a &&
-  b &&
+  a && b &&
   a.getFullYear() === b.getFullYear() &&
   a.getMonth() === b.getMonth() &&
   a.getDate() === b.getDate();
 const isBetween = (x, s, e) =>
   s && e && x.getTime() > s.getTime() && x.getTime() < e.getTime();
+const isSameMonthYear = (a, b) =>
+  a && b &&
+  a.getFullYear() === b.getFullYear() &&
+  a.getMonth() === b.getMonth();
 
 function monthMatrix(monthDate) {
   const first = startOfMonth(monthDate);
@@ -29,8 +49,10 @@ function monthMatrix(monthDate) {
 export default function DatesPanel({
   leftMonth,
   rightMonth,
+  // Controlled (optional)
   startDate,
   endDate,
+  // Callback (optional): onDayClick(clicked, nextStart, nextEnd)
   onDayClick,
   flex,
   setFlex,
@@ -39,6 +61,35 @@ export default function DatesPanel({
   const DAYS = ["S", "M", "T", "W", "T", "F", "S"];
   const quick = [0, 1, 2, 3, 7, 14];
 
+  // Internal state for check-in/out (works if parent doesn't control)
+  const [s, setS] = useState(startDate ?? null);
+  const [e, setE] = useState(endDate ?? null);
+
+  // Which part is active: 'start' (check-in) or 'end' (check-out)
+  const [picking, setPicking] = useState(() => (startDate && !endDate ? "end" : "start"));
+
+  // Keep internal in sync with controlled props
+  useEffect(() => {
+    if (startDate !== undefined) setS(startDate);
+  }, [startDate]);
+  useEffect(() => {
+    if (endDate !== undefined) setE(endDate);
+  }, [endDate]);
+  useEffect(() => {
+    if (s && !e) setPicking("end");
+    // if both selected or none selected, default to 'start'
+    if ((!s && !e) || (s && e)) setPicking("start");
+  }, [s, e]);
+
+  const fmtBadge = useMemo(
+    () =>
+      new Intl.DateTimeFormat(undefined, {
+        month: "short",
+        day: "numeric",
+      }),
+    []
+  );
+
   // Forward-only: wheel moves forward; negative deltas ignored
   const handleWheel = useCallback(
     (e) => {
@@ -46,7 +97,6 @@ export default function DatesPanel({
         Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
       if (Math.abs(delta) < 8) return;
       if (delta > 0) setOffset((v) => v + 1);
-      // negative delta ignored (no backward)
     },
     [setOffset]
   );
@@ -60,6 +110,69 @@ export default function DatesPanel({
       }
     },
     [setOffset]
+  );
+
+  const autoAdvanceForCheckout = useCallback(
+    (clickedStart) => {
+      // Desktop uses two visible months (lg >= 1024px)
+      const isDesktop =
+        typeof window !== "undefined" &&
+        window.matchMedia &&
+        window.matchMedia("(min-width: 1024px)").matches;
+
+      if (isDesktop) {
+        // If you pick start in the right visible month, advance so the next month is visible
+        if (rightMonth && isSameMonthYear(clickedStart, rightMonth)) {
+          setOffset((v) => v + 1);
+        }
+      } else {
+        // On mobile (1-month view), always advance to next month after selecting start
+        setOffset((v) => v + 1);
+      }
+    },
+    [rightMonth, setOffset]
+  );
+
+  const handleSelect = useCallback(
+    (d) => {
+      if (!d) return;
+
+      if (picking === "start") {
+        // Start a new range with this as check-in
+        setS(d);
+        setE(null);
+        setPicking("end"); // immediately switch to checkout mode
+        autoAdvanceForCheckout(d);
+        onDayClick?.(d, d, null);
+        return;
+      }
+
+      // picking === 'end'
+      if (!s) {
+        // No check-in yet; treat this as start and stay in 'end' to encourage selecting checkout
+        setS(d);
+        setE(null);
+        setPicking("end");
+        autoAdvanceForCheckout(d);
+        onDayClick?.(d, d, null);
+        return;
+      }
+
+      if (d.getTime() <= s.getTime()) {
+        // Clicked before/at start: move start to this day and continue waiting for checkout
+        setS(d);
+        setE(null);
+        setPicking("end");
+        autoAdvanceForCheckout(d);
+        onDayClick?.(d, d, null);
+      } else {
+        // Valid checkout
+        setE(d);
+        setPicking("start"); // finished a range; default back to start for next selection
+        onDayClick?.(d, s, d);
+      }
+    },
+    [picking, s, autoAdvanceForCheckout, onDayClick]
   );
 
   const Month = (monthDate) => {
@@ -98,11 +211,9 @@ export default function DatesPanel({
             const isEmpty = !d;
             const disabled = isEmpty || d < todayMid;
 
-            const start =
-              !isEmpty && startDate && isSameDay(d, startDate);
-            const end = !isEmpty && endDate && isSameDay(d, endDate);
-            const between =
-              !isEmpty && startDate && endDate && isBetween(d, startDate, endDate);
+            const start = !isEmpty && s && isSameDay(d, s);
+            const end = !isEmpty && e && isSameDay(d, e);
+            const between = !isEmpty && s && e && isBetween(d, s, e);
             const inRange = start || end || between;
 
             return (
@@ -126,7 +237,7 @@ export default function DatesPanel({
                 <button
                   type="button"
                   disabled={disabled}
-                  onClick={() => onDayClick(d)}
+                  onClick={() => handleSelect(d)}
                   className={[
                     "relative z-10 flex items-center justify-center rounded-full transition",
                     "h-8 w-8 sm:h-9 sm:w-9 text-[13px]",
@@ -150,27 +261,55 @@ export default function DatesPanel({
 
   return (
     <div className="w-[min(920px,calc(100vw-64px))] overflow-x-hidden">
-      {/* Nav chevrons: Next enabled, Prev disabled */}
-      <div className="mb-1 flex items-center justify-between">
-        <button
-          type="button"
-          disabled
-          aria-disabled="true"
-          className="inline-flex h-9 w-9 items-center justify-center rounded-full opacity-40 cursor-not-allowed"
-          aria-label="Previous month (disabled)"
-          title="Previous month (disabled)"
-        >
-          <ChevronLeft className="h-5 w-5" />
-        </button>
-        <div className="grow" />
+      {/* Header row inside the calendar: Check-in/Check-out + forward-only arrow */}
+      <div className="mb-3 flex items-center justify-between px-2">
+        <div className="flex items-center gap-2 text-[13px]">
+          <button
+            type="button"
+            onClick={() => setPicking("start")}
+            className={[
+              "rounded-full border px-3 py-1 transition",
+              picking === "start"
+                ? "bg-black text-white border-black"
+                : "bg-white text-black border-[#E5E5E5] hover:border-[#CFCFCF]",
+            ].join(" ")}
+            aria-pressed={picking === "start"}
+            title="Select check-in date"
+          >
+            <span className="font-medium">
+              Check-in{": "}
+            </span>
+            <span>{s ? fmtBadge.format(s) : "Add date"}</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setPicking("end")}
+            className={[
+              "rounded-full border px-3 py-1 transition",
+              picking === "end"
+                ? "bg-black text-white border-black"
+                : "bg-white text-black border-[#E5E5E5] hover:border-[#CFCFCF]",
+            ].join(" ")}
+            aria-pressed={picking === "end"}
+            title="Select check-out date"
+          >
+            <span className="font-medium">
+              Check-out{": "}
+            </span>
+            <span>{e ? fmtBadge.format(e) : "Add date"}</span>
+          </button>
+        </div>
+
+        {/* Forward-only button (always visible, inside the panel) */}
         <button
           type="button"
           onClick={handleNext}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-full hover:bg-[#F7F7F7]"
+          className="inline-flex h-9 w-9 items-center justify-center rounded-full bg-black text-white shadow-sm hover:bg-black/90 focus:outline-none focus:ring-2 focus:ring-black/30"
           aria-label="Next month"
           title="Next month"
         >
-          <ChevronRight className="h-5 w-5" />
+          <ChevronRightIcon />
         </button>
       </div>
 

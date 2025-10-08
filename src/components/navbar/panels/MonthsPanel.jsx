@@ -3,7 +3,7 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 export default function MonthsPanel({ startDate, endDate, setStartDate, setEndDate }) {
   const [months, setMonths] = useState(3);
 
-  // Base start: next month if empty, or first day of chosen start month
+  // Base start: next month if none selected
   const baseStart = useMemo(() => {
     if (startDate) return new Date(startDate.getFullYear(), startDate.getMonth(), 1);
     const now = new Date();
@@ -18,106 +18,102 @@ export default function MonthsPanel({ startDate, endDate, setStartDate, setEndDa
     setEndDate?.(e);
   }, [months, baseStart, setStartDate, setEndDate]);
 
-  const clamp = (n, a, b) => Math.min(b, Math.max(a, n));
+  // Dial sizing/styling
+  const size = 340;            // SVG viewport size
+  const cx = size / 2;
+  const cy = size / 2;
+  const trackWidth = 28;       // ring thickness
+  const handleSize = 44;       // knob diameter
+  const outerPad = 10;         // padding for glow/shadow
+
+  // Compute radius so ring + knob stay inside viewport
+  const r = Math.min(cx, cy) - Math.max(trackWidth / 2 + outerPad, handleSize / 2 + outerPad);
+
+  // Angles (0° = 12 o’clock, positive clockwise)
+  const START = 30;            // 1 o’clock (degrees from top)
+  const KNOB_OFFSET_DEG = -30; // move knob back 30° from arc end (your request)
+
+  const toRad = (deg) => (deg * Math.PI) / 180;
+  const polarTop = (deg) => {
+    const rad = toRad(deg - 90); // convert top-based to standard cos/sin (0° = right)
+    return { x: cx + r * Math.cos(rad), y: cy + r * Math.sin(rad) };
+  };
+
+  // Arc end from top; months=12 => 12 o’clock
+  const endTopDegRaw = START + (months / 12) * 360; // 30..390
+  const endTopDeg = endTopDegRaw % 360 || (months === 12 ? 360 : 0);
+  const fullRing = months === 12;
+
+  // Gapless arc path: full circle is two 180° arcs
+  const arcPath = () => {
+    if (fullRing) {
+      const s = polarTop(START);
+      const midDeg = START + 180;
+      const m = polarTop(midDeg);
+      const e = polarTop(START + 360);
+      return [
+        `M ${s.x} ${s.y} A ${r} ${r} 0 1 1 ${m.x} ${m.y}`,
+        `A ${r} ${r} 0 1 1 ${e.x} ${e.y}`,
+      ].join(" ");
+    }
+    const s = polarTop(START);
+    const e = polarTop(endTopDeg);
+    const delta = (endTopDeg - START + 360) % 360;
+    const largeArc = delta > 180 ? 1 : 0;
+    return `M ${s.x} ${s.y} A ${r} ${r} 0 ${largeArc} 1 ${e.x} ${e.y}`;
+  };
+
+  // Knob position: 30° behind arc end
+  const knobDegTop = (endTopDeg + KNOB_OFFSET_DEG + 360) % 360;
+  const knobPos = polarTop(knobDegTop);
+
+  // Dragging -> months (snap to sectors so 12 o’clock is 12)
   const dialRef = useRef(null);
-  const [dragging, setDragging] = useState(false);
-
-  // Clock behavior: START at 1 o’clock, full 360° sweep (no permanent gap)
-  const START = 30;     // degrees from top (1 o’clock)
-  const SWEEP = 360;    // cover full circle so 12 months fills the ring
-  const HILITE = 16;    // brighter arc tail
-  const EPS = 0.6;      // tiny overlap to hide seams
-
-  // Pointer angle with 0° at 12 o’clock
   const toAngleFromCenterTop = (cx, cy, x, y) => {
     const rad = Math.atan2(y - cy, x - cx);
-    let deg = (rad * 180) / Math.PI; // -180..180, 0 at 3 o’clock
-    deg += 90; // move zero to top
+    let deg = (rad * 180) / Math.PI; // -180..180 (0 at 3 o’clock)
+    deg += 90;                       // move 0 to 12 o’clock
     if (deg < 0) deg += 360;
-    return deg; // 0..360
+    return deg;                      // 0..360 from top
   };
 
   const onPointer = (e) => {
     if (!dialRef.current) return;
     const rect = dialRef.current.getBoundingClientRect();
-    const cx = rect.left + rect.width / 2;
-    const cy = rect.top + rect.height / 2;
+    const angleTop = toAngleFromCenterTop(
+      rect.left + rect.width / 2,
+      rect.top + rect.height / 2,
+      e.clientX,
+      e.clientY
+    );
 
-    const angleTop = toAngleFromCenterTop(cx, cy, e.clientX, e.clientY);
-    // map to [0..1] across full sweep
-    let raw = ((angleTop - START + 360) % 360) / SWEEP;
-    raw = clamp(raw, 0, 1);
-
-    const snap = Math.max(1, Math.min(12, Math.round(raw * 12)));
+    // Map 1 o’clock to 0°, then snap 30° sectors:
+    // [0,30) -> 1, [30,60) -> 2, ..., [330,360) -> 12
+    const fromStart = (angleTop - START + 360) % 360;
+    const snap = Math.min(12, Math.max(1, Math.floor(fromStart / 30) + 1));
     setMonths(snap);
   };
 
   const onPointerDown = (e) => {
     e.preventDefault();
-    setDragging(true);
     onPointer(e);
     window.addEventListener("pointermove", onPointer);
     window.addEventListener("pointerup", onPointerUp, { once: true });
   };
   const onPointerUp = () => {
-    setDragging(false);
     window.removeEventListener("pointermove", onPointer);
   };
 
   const onKeyDown = (e) => {
     if (e.key === "ArrowRight" || e.key === "ArrowUp") {
       e.preventDefault();
-      setMonths((m) => clamp(m + 1, 1, 12));
+      setMonths((m) => Math.min(12, m + 1));
     }
     if (e.key === "ArrowLeft" || e.key === "ArrowDown") {
       e.preventDefault();
-      setMonths((m) => clamp(m - 1, 1, 12));
+      setMonths((m) => Math.max(1, m - 1));
     }
   };
-
-  // Dynamic radius so ticks/handle stay on the same circle
-  const handleSize = 44;
-  const trackInset = 16;
-  const [radius, setRadius] = useState(126);
-  useEffect(() => {
-    const update = () => {
-      if (!dialRef.current) return;
-      const w = dialRef.current.offsetWidth;
-      const r = w / 2 - trackInset - handleSize / 2;
-      setRadius(Math.max(70, r));
-    };
-    update();
-    window.addEventListener("resize", update);
-    return () => window.removeEventListener("resize", update);
-  }, []);
-
-  // End angle from top; for 12 months put knob at 12 o’clock
-  const endTopDegRaw = START + (months / 12) * SWEEP; // 30..390
-  const endTopDeg = endTopDegRaw % 360 || (months === 12 ? 360 : 0);
-  const endKnobDeg = months === 12 ? 360 : endTopDeg;
-
-  // Layered backgrounds: base grey ring, then pink arc overlay with a tiny overlap (EPS) so no gap is visible
-  const highlight = `radial-gradient(120px 120px at 75% 15%, rgba(255,255,255,0.65), rgba(255,255,255,0) 60%)`;
-  const glow = `radial-gradient(200px 140px at 70% 100%, rgba(255,56,92,0.25), rgba(255,56,92,0) 70%)`;
-  const baseRing = `conic-gradient(from -90deg, rgba(0,0,0,0.06) 0 360deg)`;
-
-  const startWithOverlap = Math.max(0, START - EPS);
-  const endWithOverlap = (months === 12 ? 360 : endTopDeg + EPS);
-  const mid = Math.max(startWithOverlap, (months === 12 ? 360 : endTopDeg) - HILITE);
-
-  const arcLayer =
-    months === 12
-      ? // full ring (no gap)
-        `conic-gradient(from -90deg, #ff6a88 0deg, #ff3e66 180deg, #e11d48 360deg)`
-      : // arc with small overlap at both ends to hide seams
-        `conic-gradient(from -90deg,
-          transparent 0deg,
-          transparent ${startWithOverlap}deg,
-          #ff6a88 ${startWithOverlap}deg,
-          #ff3e66 ${mid}deg,
-          #e11d48 ${endWithOverlap}deg,
-          transparent ${endWithOverlap}deg 360deg
-        )`;
 
   const fmt = (d) =>
     new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", year: "numeric" }).format(d);
@@ -128,7 +124,8 @@ export default function MonthsPanel({ startDate, endDate, setStartDate, setEndDa
 
       <div
         ref={dialRef}
-        className="relative mx-auto my-6 h-[340px] w-[340px] select-none rounded-full"
+        className="relative mx-auto my-6 cursor-grab active:cursor-grabbing"
+        style={{ width: size, height: size, touchAction: "none" }}
         role="slider"
         aria-label="Select number of months"
         aria-valuemin={1}
@@ -137,66 +134,75 @@ export default function MonthsPanel({ startDate, endDate, setStartDate, setEndDa
         tabIndex={0}
         onKeyDown={onKeyDown}
         onPointerDown={onPointerDown}
-        style={{
-          background: `${highlight}, ${glow}, ${arcLayer}, ${baseRing}`,
-          boxShadow:
-            "inset 0 18px 40px rgba(0,0,0,.10), inset 0 -10px 18px rgba(0,0,0,.08), 0 10px 30px rgba(0,0,0,.10)",
-          touchAction: "none",
-          transition: "background 120ms ease",
-        }}
       >
-        {/* Center puck */}
-        <div className="absolute left-1/2 top-1/2 h-[168px] w-[168px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_16px_32px_rgba(0,0,0,.18),_inset_0_-2px_0_rgba(0,0,0,.04)] flex items-center justify-center">
-          <div className="text-center">
-            <div className="text-[56px] leading-none font-extrabold text-[#111]">{months}</div>
-            <div className="mt-1 text-sm text-[#6B7280]">{months === 1 ? "month" : "months"}</div>
-          </div>
-        </div>
+        <svg width={size} height={size} viewBox={`0 0 ${size} ${size}`}>
+          <defs>
+            {/* bright ring gradient */}
+            <linearGradient id="pinkGrad" x1="0%" y1="0%" x2="100%" y2="0%">
+              <stop offset="0%" stopColor="#FF6A88" />
+              <stop offset="60%" stopColor="#FF3E66" />
+              <stop offset="100%" stopColor="#E11D48" />
+            </linearGradient>
+            {/* glossy highlight */}
+            <radialGradient id="ringSheen" cx="25%" cy="8%" r="60%">
+              <stop offset="0%" stopColor="rgba(255,255,255,0.6)" />
+              <stop offset="60%" stopColor="rgba(255,255,255,0)" />
+            </radialGradient>
+            {/* bottom glow */}
+            <radialGradient id="ringGlow" cx="70%" cy="95%" r="60%">
+              <stop offset="0%" stopColor="rgba(255,56,92,0.25)" />
+              <stop offset="70%" stopColor="rgba(255,56,92,0)" />
+            </radialGradient>
+            <filter id="softShadow" x="-30%" y="-30%" width="160%" height="160%">
+              <feDropShadow dx="0" dy="16" stdDeviation="12" floodColor="rgba(0,0,0,.18)" />
+            </filter>
+          </defs>
 
-        {/* 12 tick dots */}
-        {Array.from({ length: 12 }).map((_, i) => {
-          const degTop = (i / 12) * 360;
-          const rad = (degTop * Math.PI) / 180;
-          const x = radius * Math.sin(rad);
-          const y = -radius * Math.cos(rad);
-          const isFilled = i <= months - 1;
-          return (
-            <span
-              key={i}
-              className="absolute h-1.5 w-1.5 rounded-full pointer-events-none"
-              style={{
-                left: `calc(50% + ${x}px)`,
-                top: `calc(50% + ${y}px)`,
-                transform: "translate(-50%, -50%)",
-                backgroundColor: isFilled ? "rgba(17,24,39,0.35)" : "rgba(17,24,39,0.18)",
-              }}
-            />
-          );
-        })}
+          {/* base grey ring */}
+          <circle cx={cx} cy={cy} r={r} fill="none" stroke="rgba(0,0,0,0.06)" strokeWidth={trackWidth} />
 
-        {/* Handle: center -> rotate by (endKnobDeg - 90) -> translate -> keep upright */}
-        <div
-          className="absolute left-1/2 top-1/2 will-change-transform"
-          style={{ transform: `translate(-50%, -50%) rotate(${endKnobDeg - 90}deg)` }}
-        >
-          <div style={{ transform: `translateX(${radius}px)` }}>
-            <div
-              className={[
-                "rounded-full bg-white shadow-[0_6px_16px_rgba(0,0,0,.25),_inset_0_-2px_0_rgba(0,0,0,.06)] transition-transform",
-                dragging ? "cursor-grabbing" : "cursor-grab",
-              ].join(" ")}
-              style={{
-                height: `${handleSize}px`,
-                width: `${handleSize}px`,
-                border: "5px solid #ff3e66",
-                transform: `rotate(-${endKnobDeg - 90}deg)`,
-              }}
+          {/* pink arc (gapless, round caps) */}
+          <path d={arcPath()} fill="none" stroke="url(#pinkGrad)" strokeWidth={trackWidth} strokeLinecap="round" />
+
+          {/* sheen + glow */}
+          <circle cx={cx} cy={cy} r={r + trackWidth / 2} fill="url(#ringGlow)" />
+          <circle cx={cx} cy={cy} r={r + trackWidth / 2.2} fill="url(#ringSheen)" />
+
+          {/* center puck */}
+          <g filter="url(#softShadow)">
+            <circle cx={cx} cy={cy} r={84} fill="#fff" />
+          </g>
+          <foreignObject x={cx - 84} y={cy - 84} width="168" height="168">
+            <div className="w-full h-full flex items-center justify-center text-center">
+              <div>
+                <div className="text-[56px] leading-none font-extrabold text-[#111]">{months}</div>
+                <div className="mt-1 text-sm text-[#6B7280]">{months === 1 ? "month" : "months"}</div>
+              </div>
+            </div>
+          </foreignObject>
+
+          {/* 12 tick dots */}
+          {Array.from({ length: 12 }).map((_, i) => {
+            const degTop = (i / 12) * 360; // 0..360 from top
+            const p = polarTop(degTop);
+            const major = i % 3 === 0;
+            return <circle key={i} cx={p.x} cy={p.y} r={major ? 3 : 2} fill="rgba(17,24,39,0.28)" />;
+          })}
+
+          {/* knob 30° behind arc end */}
+          <g transform={`translate(${knobPos.x}, ${knobPos.y})`}>
+            <circle
+              r={handleSize / 2}
+              fill="#fff"
+              stroke="#ff3e66"
+              strokeWidth="5"
+              style={{ filter: "drop-shadow(0 6px 16px rgba(0,0,0,.25))" }}
             />
-          </div>
-        </div>
+          </g>
+        </svg>
       </div>
 
-      {/* Date preview */}
+      {/* date preview */}
       <div className="mt-6 text-center text-[15px] text-[#222222]">
         <span className="underline underline-offset-[6px] decoration-[1.5px] decoration-black/60">
           {fmt(startDate || baseStart)}
