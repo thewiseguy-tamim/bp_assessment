@@ -59,7 +59,7 @@ export default function Navbar() {
   return (
     <header
       className={[
-        "sticky top-0 z-50 w-full bg-white/90 backdrop-blur-sm shadow-sm",
+        "sticky top-0 z-50 w-full bg-[#fafafa] backdrop-blur-sm shadow-sm",
         // Tiny padding change while width is morphing (no height jump)
         "transition-[padding] duration-200 ease-[cubic-bezier(0.4,0,0.2,1)]",
         progress > 0 ? "py-2.5" : "py-4",

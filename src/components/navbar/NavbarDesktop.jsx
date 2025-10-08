@@ -284,7 +284,7 @@ function UserMenuButton() {
         className="inline-flex items-center gap-2 rounded-full border border-[#DDDDDD] px-3 py-2 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/10"
       >
         <Menu className="h-5 w-5 text-[#222222]" />
-        <User className="h-6 w-6 text-[#717171]" />
+        {/* <User className="h-6 w-6 text-[#717171]" /> */}
       </button>
 
       {open && (

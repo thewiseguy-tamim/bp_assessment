@@ -3,6 +3,13 @@ import React, { useEffect, useMemo, useRef, useState } from "react";
 export default function MonthsPanel({ startDate, endDate, setStartDate, setEndDate }) {
   const [months, setMonths] = useState(3);
 
+  // Debug helper (toggle: window.__SEARCH_DEBUG__ = true/false)
+  const dbg = (...args) => {
+    if (typeof window === "undefined") return;
+    const enabled = window.__SEARCH_DEBUG__ ?? false;
+    if (enabled) console.debug("[MonthsPanel]", ...args);
+  };
+
   // Base start: next month if none selected
   const baseStart = useMemo(() => {
     if (startDate) return new Date(startDate.getFullYear(), startDate.getMonth(), 1);
@@ -14,24 +21,25 @@ export default function MonthsPanel({ startDate, endDate, setStartDate, setEndDa
   useEffect(() => {
     const s = baseStart;
     const e = new Date(s.getFullYear(), s.getMonth() + months, 1);
+    dbg("sync external dates", { months, start: s, end: e });
     setStartDate?.(s);
     setEndDate?.(e);
   }, [months, baseStart, setStartDate, setEndDate]);
 
   // Sizing
-  const size = 340;              // SVG viewport
+  const size = 360;              // SVG viewport (slightly larger to match screenshot scale)
   const cx = size / 2;
   const cy = size / 2;
   const trackWidth = 28;         // ring thickness
   const handleSize = 44;         // knob diameter
-  const outerPad = 10;           // padding for glow/shadow
+  const outerPad = 12;           // padding for glow/shadow
 
   // Geometry: keep ring + knob inside viewport
   const r = Math.min(cx, cy) - Math.max(trackWidth / 2 + outerPad, handleSize / 2 + outerPad);
 
   // Angles (0° at 12 o’clock, clockwise positive)
-  const START = 30;            // 1 o’clock from top
-  const KNOB_OFFSET_DEG = -30; // keep your 30° trailing knob (visual)
+  const START = 30;            // 1 o’clock from top (as in your image)
+  const KNOB_OFFSET_DEG = -30; // keep knob trailing arc end visually by 30°
 
   const toRad = (deg) => (deg * Math.PI) / 180;
   const polarTop = (deg) => {
@@ -43,7 +51,7 @@ export default function MonthsPanel({ startDate, endDate, setStartDate, setEndDa
   const endTopDegRaw = START + (months / 12) * 360; // 30..390
   const endTopDeg = endTopDegRaw % 360 || (months === 12 ? 360 : 0);
 
-  // Knob angle (30° behind arc end, as you had)
+  // Knob angle (30° behind arc end)
   const knobDegTop = (endTopDeg + KNOB_OFFSET_DEG + 360) % 360;
 
   // Round stroke caps extend past the path end by half the stroke width.
@@ -87,6 +95,7 @@ export default function MonthsPanel({ startDate, endDate, setStartDate, setEndDa
     // [0,30) -> 1, [30,60) -> 2, ..., [330,360) -> 12
     const fromStart = (angleTop - START + 360) % 360;
     const snap = Math.min(12, Math.max(1, Math.floor(fromStart / 30) + 1));
+    if (snap !== months) dbg("pointer -> months", { angleTop, fromStart, snap });
     setMonths(snap);
   };
 
@@ -113,15 +122,23 @@ export default function MonthsPanel({ startDate, endDate, setStartDate, setEndDa
   };
 
   const fmt = (d) =>
-    new Intl.DateTimeFormat(undefined, { month: "short", day: "numeric", year: "numeric" }).format(d);
+    new Intl.DateTimeFormat(undefined, {
+      month: "short",
+      day: "numeric",
+      year: "numeric",
+    }).format(d);
 
   return (
-    <div className="w-[min(920px,calc(100vw-64px))] min-h-[600px]">
-      <div className="mb-6 text-center text-[20px] font-semibold text-[#222222]">When’s your trip?</div>
+    <div className="w-[min(920px,calc(100vw-64px))]">
+      {/* Title */}
+      <div className="mt-1 mb-6 text-center text-[20px] sm:text-[22px] font-semibold text-[#222222]">
+        When’s your trip?
+      </div>
 
+      {/* Dial */}
       <div
         ref={dialRef}
-        className="relative mx-auto my-6 cursor-grab active:cursor-grabbing"
+        className="relative mx-auto my-3 cursor-grab active:cursor-grabbing"
         style={{ width: size, height: size, touchAction: "none" }}
         role="slider"
         aria-label="Select number of months"
@@ -142,13 +159,13 @@ export default function MonthsPanel({ startDate, endDate, setStartDate, setEndDa
             </linearGradient>
             {/* Glossy highlight (white) */}
             <radialGradient id="ringSheen" cx="25%" cy="8%" r="60%">
-              <stop offset="0%" stopColor="rgba(255,255,255,0.6)" />
-              <stop offset="60%" stopColor="rgba(255,255,255,0)" />
+              <stop offset="0%" stopColor="#ffffff" stopOpacity="0.6" />
+              <stop offset="60%" stopColor="#ffffff" stopOpacity="0" />
             </radialGradient>
             {/* Neutral glow (no pink ahead) */}
             <radialGradient id="ringGlow" cx="70%" cy="95%" r="60%">
-              <stop offset="0%" stopColor="rgba(0,0,0,0.08)" />
-              <stop offset="70%" stopColor="rgba(0,0,0,0)" />
+              <stop offset="0%" stopColor="#000000" stopOpacity="0.08" />
+              <stop offset="70%" stopColor="#000000" stopOpacity="0" />
             </radialGradient>
             <filter id="softShadow" x="-30%" y="-30%" width="160%" height="160%">
               <feDropShadow dx="0" dy="16" stdDeviation="12" floodColor="rgba(0,0,0,.18)" />
@@ -186,7 +203,7 @@ export default function MonthsPanel({ startDate, endDate, setStartDate, setEndDa
             return <circle key={i} cx={p.x} cy={p.y} r={major ? 3 : 2} fill="rgba(17,24,39,0.28)" />;
           })}
 
-          {/* Knob (30° behind arc end, and no color in front of it) */}
+          {/* Knob (30° behind arc end, with subtle shadow) */}
           <g transform={`translate(${knobPos.x}, ${knobPos.y})`}>
             <circle
               r={handleSize / 2}
@@ -199,8 +216,8 @@ export default function MonthsPanel({ startDate, endDate, setStartDate, setEndDa
         </svg>
       </div>
 
-      {/* Date preview */}
-      <div className="mt-6 text-center text-[15px] text-[#222222]">
+      {/* Date preview (underlined like the screenshot) */}
+      <div className="mt-6 mb-2 text-center text-[15px] text-[#222222]">
         <span className="underline underline-offset-[6px] decoration-[1.5px] decoration-black/60">
           {fmt(startDate || baseStart)}
         </span>

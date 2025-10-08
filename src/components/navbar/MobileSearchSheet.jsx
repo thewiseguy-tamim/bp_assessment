@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState } from "react";
 import {
   X,
   Home,
@@ -32,7 +32,6 @@ const isSameDay = (a, b) =>
   a && b && a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth() && a.getDate() === b.getDate();
 const isBetween = (x, s, e) => s && e && x.getTime() > s.getTime() && x.getTime() < e.getTime();
 
-/* Build a 6x7 calendar matrix */
 function monthMatrix(monthDate) {
   const first = startOfMonth(monthDate);
   const startWeekday = first.getDay();
@@ -45,22 +44,10 @@ function monthMatrix(monthDate) {
   return cells;
 }
 
-/* Force demo months to Oct/Nov 2025 to match your mock. Use `new Date()` for live behavior. */
+/* Force demo months to Oct/Nov 2025 to match the mock. Use new Date() for real-time behavior. */
 const DEMO_TODAY = new Date(2025, 9, 5);
 
-/* Quick date flexibility options */
-const QUICK_OPTIONS = [0, 1, 2, 3];
-
 export default function MobileSearchSheet({ open, onClose }) {
-  // Debug fingerprint
-  useEffect(() => {
-    console.log("MobileSearchSheet mounted v8", { at: new Date().toISOString() });
-  }, []);
-  useEffect(() => {
-    console.log("MobileSearchSheet open changed v8:", open);
-  }, [open]);
-
-  // Default panel like your target shot: Who?
   const [active, setActive] = useState("who"); // 'where' | 'when' | 'who'
   const [dateTab, setDateTab] = useState("dates");
 
@@ -78,19 +65,20 @@ export default function MobileSearchSheet({ open, onClose }) {
   const leftMonth = useMemo(() => addMonths(startOfMonth(today), offset), [today, offset]);
   const rightMonth = useMemo(() => addMonths(leftMonth, 1), [leftMonth]);
 
+  // Keep onClose stable to avoid effect churn
+  const onCloseRef = useRef(onClose);
+  useEffect(() => {
+    onCloseRef.current = onClose;
+  }, [onClose]);
+
   useEffect(() => {
     if (!open) return;
-    const esc = (e) => e.key === "Escape" && onClose?.();
+    const esc = (e) => e.key === "Escape" && onCloseRef.current?.();
     window.addEventListener("keydown", esc);
     return () => window.removeEventListener("keydown", esc);
-  }, [open, onClose]);
-
-  useEffect(() => {
-    console.log("MobileSearchSheet active panel v8:", active);
-  }, [active]);
+  }, [open]);
 
   const clearAll = () => {
-    console.log("MobileSearchSheet clearAll v8");
     setQuery("");
     setLocation(null);
     setStartDate(null);
@@ -104,7 +92,7 @@ export default function MobileSearchSheet({ open, onClose }) {
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[1100] bg-white" data-sheet-version="v8">
+    <div className="fixed inset-0 z-[1100] bg-white">
       {/* Top icons row (sticky) */}
       <div className="sticky top-0 z-[1110] bg-white px-4 pt-3 pb-2">
         <div className="mx-auto flex max-w-[560px] items-center justify-between">
@@ -113,21 +101,33 @@ export default function MobileSearchSheet({ open, onClose }) {
             <TopIcon label="Experiences" icon={<PartyPopper className="h-6 w-6" />} />
             <TopIcon label="Services" icon={<ConciergeBell className="h-6 w-6" />} />
           </div>
-          <button
-            type="button"
-            onClick={onClose}
-            aria-label="Close"
-            className="inline-flex h-10 w-10 items-center justify-center rounded-full hover:bg-[#F7F7F7]"
-          >
-            <X className="h-5 w-5" />
-          </button>
+
+          <div className="flex items-center gap-2">
+            {/* I'm flexible pill in header (matches your screenshots) */}
+            <button
+              type="button"
+              onClick={() => setLocation({ id: "flexible", name: "I'm flexible" })}
+              className="hidden sm:inline-flex rounded-full border border-[#DDDDDD] px-3 py-1.5 text-[13px] font-medium text-[#222222] hover:bg-[#F7F7F7]"
+            >
+              I&apos;m flexible
+            </button>
+
+            <button
+              type="button"
+              onClick={onClose}
+              aria-label="Close"
+              className="inline-flex h-10 w-10 items-center justify-center rounded-full hover:bg-[#F7F7F7]"
+            >
+              <X className="h-5 w-5" />
+            </button>
+          </div>
         </div>
       </div>
 
-      {/* Scrollable content. The large bottom padding ensures nothing hides behind sticky bar. */}
+      {/* Scrollable content */}
       <div className="relative h-[calc(100vh-136px)] overflow-auto px-4 pb-40">
         <div className="mx-auto w-full max-w-[560px]">
-          {/* Where */}
+          {/* Where chip */}
           <SectionChip
             title="Where"
             value={location?.name || "I'm flexible"}
@@ -140,7 +140,7 @@ export default function MobileSearchSheet({ open, onClose }) {
             </PanelCard>
           )}
 
-          {/* When */}
+          {/* When chip */}
           <SectionChip
             className="mt-3"
             title="When"
@@ -168,7 +168,7 @@ export default function MobileSearchSheet({ open, onClose }) {
             </PanelCard>
           )}
 
-          {/* Who */}
+          {/* Who chip */}
           <SectionChip
             className="mt-3"
             title="Who"
@@ -187,11 +187,7 @@ export default function MobileSearchSheet({ open, onClose }) {
       {/* Sticky bottom action bar */}
       <div className="fixed bottom-0 left-0 right-0 z-[1120] border-t border-[#EBEBEB] bg-white/95 px-4 py-3 backdrop-blur supports-[padding:max(0px)]">
         <div className="mx-auto flex max-w-[560px] items-center justify-between">
-          <button
-            type="button"
-            onClick={clearAll}
-            className="text-[14px] underline text-[#222222]"
-          >
+          <button type="button" onClick={clearAll} className="text-[14px] underline text-[#222222]">
             Clear all
           </button>
 
@@ -266,10 +262,6 @@ function PanelCard({ children, className = "" }) {
 /* ---------- Panels ---------- */
 
 function WherePanel({ query, setQuery, location, setLocation }) {
-  useEffect(() => {
-    console.log("WherePanel v8 render. location:", location);
-  }, [location]);
-
   const filtered = useMemo(() => {
     if (!query) return SUGGESTIONS;
     return SUGGESTIONS.filter((s) => s.name.toLowerCase().includes(query.toLowerCase()));
@@ -277,20 +269,7 @@ function WherePanel({ query, setQuery, location, setLocation }) {
 
   return (
     <div>
-      {/* Header with "I'm flexible" action on the right */}
-      <div className="mb-3 flex items-center justify-between">
-        <div className="text-[18px] font-semibold text-[#222222]">Where?</div>
-        <button
-          type="button"
-          onClick={() => {
-            console.log("WherePanel v8: setLocation('I'm flexible')");
-            setLocation({ id: "flexible", name: "I'm flexible" });
-          }}
-          className="rounded-full border border-[#DDDDDD] px-3 py-1.5 text-[13px] font-medium text-[#222222] hover:bg-[#F7F7F7]"
-        >
-          I&apos;m flexible
-        </button>
-      </div>
+      <div className="mb-3 text-[18px] font-semibold text-[#222222]">Where?</div>
 
       <div className="rounded-xl border border-[#DDDDDD] px-3 py-2.5">
         <div className="flex items-center gap-2">
@@ -299,11 +278,7 @@ function WherePanel({ query, setQuery, location, setLocation }) {
             className="flex-1 bg-transparent outline-none text-[15px]"
             placeholder="Search destinations"
             value={query}
-            onChange={(e) => {
-              const v = e.target.value;
-              console.log("WherePanel v8: query changed ->", v);
-              setQuery(v);
-            }}
+            onChange={(e) => setQuery(e.target.value)}
           />
         </div>
       </div>
@@ -314,15 +289,10 @@ function WherePanel({ query, setQuery, location, setLocation }) {
           <button
             key={s.id}
             type="button"
-            onClick={() => {
-              console.log("WherePanel v8: pick suggestion", s.id);
-              setLocation({ id: s.id, name: s.name });
-            }}
+            onClick={() => setLocation({ id: s.id, name: s.name })}
             className="flex w-full items-center gap-3 rounded-xl p-2 text-left hover:bg-[#F7F7F7]"
           >
-            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#F1F5F9]">
-              {s.icon}
-            </div>
+            <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-[#F1F5F9]">{s.icon}</div>
             <div>
               <div className="text-[15px] text-[#222222]">{s.name}</div>
               <div className="text-[13px] text-[#717171]">{s.tagline}</div>
@@ -343,25 +313,12 @@ function WhenPanel({
   endDate,
   setStartDate,
   setEndDate,
-  offset: _offset, // accept but intentionally unused (aliased to avoid lint warning)
+  offset: _offset, // not used directly
   setOffset,
   todayRef,
   flexDays,
   setFlexDays,
 }) {
-  useEffect(() => {
-    const fmtMY = new Intl.DateTimeFormat(undefined, { month: "long", year: "numeric" });
-    console.log("WhenPanel v8 months:", {
-      left: fmtMY.format(leftMonth),
-      right: fmtMY.format(rightMonth),
-      todayRef: todayRef.toDateString(),
-    });
-  }, [leftMonth, rightMonth, todayRef]);
-
-  useEffect(() => {
-    console.log("WhenPanel v8 flexDays:", flexDays);
-  }, [flexDays]);
-
   return (
     <div>
       <div className="mb-2 text-[18px] font-semibold text-[#222222]">When?</div>
@@ -370,10 +327,7 @@ function WhenPanel({
         {["dates", "months", "flexible"].map((t) => (
           <button
             key={t}
-            onClick={() => {
-              console.log("WhenPanel v8: dateTab ->", t);
-              setDateTab(t);
-            }}
+            onClick={() => setDateTab(t)}
             className={[
               "rounded-full px-4 py-2 text-[14px] font-medium transition",
               dateTab === t ? "bg-white shadow-sm" : "text-[#222222] hover:text-[#717171]",
@@ -399,25 +353,17 @@ function WhenPanel({
         />
       )}
 
-      {dateTab === "months" && (
-        <div className="py-10 text-center text-[#717171]">Months picker coming soon</div>
-      )}
-
-      {dateTab === "flexible" && (
-        <div className="py-10 text-center text-[#717171]">Flexible options coming soon</div>
-      )}
+      {dateTab === "months" && <div className="py-10 text-center text-[#717171]">Months picker coming soon</div>}
+      {dateTab === "flexible" && <div className="py-10 text-center text-[#717171]">Flexible options coming soon</div>}
 
       <div className="mt-3 flex flex-wrap items-center gap-2">
-        {QUICK_OPTIONS.map((d) => {
+        {[0, 1, 2, 3].map((d) => {
           const active = d === flexDays;
           return (
             <button
-              key={d}
+              key={`flex-${d}`}
               type="button"
-              onClick={() => {
-                console.log("WhenPanel v8: setFlexDays ->", d);
-                setFlexDays(d);
-              }}
+              onClick={() => setFlexDays(d)}
               className={[
                 "rounded-full border px-3 py-1.5 text-[13px]",
                 active ? "border-black text-[#222222]" : "border-[#DDDDDD] text-[#222222] hover:bg-[#F7F7F7]",
@@ -432,28 +378,13 @@ function WhenPanel({
   );
 }
 
-function DatesCalendar({
-  leftMonth,
-  rightMonth,
-  startDate,
-  endDate,
-  setStartDate,
-  setEndDate,
-  setOffset,
-  todayRef,
-}) {
+function DatesCalendar({ leftMonth, rightMonth, startDate, endDate, setStartDate, setEndDate, setOffset, todayRef }) {
   const handleClickDay = (d) => {
     if (!d) return;
     const todayMid = new Date(todayRef.getFullYear(), todayRef.getMonth(), todayRef.getDate());
     const dm = new Date(d.getFullYear(), d.getMonth(), d.getDate());
     if (dm < todayMid) return;
 
-    console.log("DatesCalendar v8: click", d.toDateString(), {
-      prevStart: startDate?.toDateString(),
-      prevEnd: endDate?.toDateString(),
-    });
-
-    // Behavior: pick start -> automatically nudge forward a month on mobile
     if (!startDate || (startDate && endDate)) {
       setStartDate(d);
       setEndDate(null);
@@ -472,15 +403,23 @@ function DatesCalendar({
   const MonthGrid = (monthDate) => {
     const days = monthMatrix(monthDate);
     const label = new Intl.DateTimeFormat(undefined, { month: "long", year: "numeric" }).format(monthDate);
-    const weekdays = ["S", "M", "T", "W", "T", "F", "S"];
+    const weekdays = [
+      { key: "sun", label: "S" },
+      { key: "mon", label: "M" },
+      { key: "tue", label: "T" },
+      { key: "wed", label: "W" },
+      { key: "thu", label: "T" },
+      { key: "fri", label: "F" },
+      { key: "sat", label: "S" },
+    ];
     const todayMid = new Date(todayRef.getFullYear(), todayRef.getMonth(), todayRef.getDate());
 
     return (
       <div className="mb-4 w-full">
         <div className="mb-2 text-center text-[16px] font-semibold text-[#222222]">{label}</div>
         <div className="grid grid-cols-7 gap-y-2 text-center text-[12px] font-semibold uppercase text-[#717171]">
-          {weekdays.map((d) => (
-            <div key={d}>{d}</div>
+          {weekdays.map((d, i) => (
+            <div key={`${d.key}-${i}`}>{d.label}</div>
           ))}
         </div>
         <div className="mt-1 grid grid-cols-7 gap-y-1">
@@ -528,12 +467,7 @@ function WhoPanel({ guests, setGuests }) {
   ];
 
   const update = (k, delta) => {
-    const next = (g) => ({ ...g, [k]: Math.max(0, (g[k] || 0) + delta) });
-    setGuests((g) => {
-      const val = next(g);
-      console.log("WhoPanel v8:", k, "->", val[k]);
-      return val;
-    });
+    setGuests((g) => ({ ...g, [k]: Math.max(0, (g[k] || 0) + delta) }));
   };
 
   return (

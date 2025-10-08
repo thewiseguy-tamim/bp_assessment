@@ -37,7 +37,7 @@ export default function App() {
       {/* Categories / filters preview removed per request */}
 
       {/* Popular homes sections by city */}
-      <div className="mt-6 space-y-8">
+      <div className="mt-6 mb-20 space-y-8">
         {sections.map((s) => (
           <PopularHomesSection
             key={s.id}
