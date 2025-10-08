@@ -29,7 +29,7 @@ export default function PopularHomesSection({
   };
 
   return (
-    <section className={`w-full ${className}`}>
+    <section className= {`w-full ${className}`}>
       <div className="mx-auto max-w-[1760px] px-4 sm:px-6">
         <div className="mb-3 sm:mb-4 flex items-center justify-between">
           <h2 className="text-[18px] font-semibold text-[#222222]">{title}</h2>

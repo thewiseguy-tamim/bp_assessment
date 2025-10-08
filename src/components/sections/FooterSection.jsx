@@ -9,6 +9,8 @@ import {
   ChevronUp,
 } from "lucide-react";
 
+import tt from "../../assets/tik.png";
+
 export default function FooterSection() {
   const cols = [
     {
@@ -145,7 +147,7 @@ export default function FooterSection() {
     activeTab === "apts" ? inspirationItems.apts : inspirationItems[activeTab];
 
   return (
-    <footer className="w-full bg-white">
+    <footer className="w-full bg-[#f7f7f7] mt-5">
       <div className="mx-auto max-w-[1760px] px-4 sm:px-6 border-t border-[#EEEEEE]">
         {/* Inspiration for future getaways */}
         <section className="py-8 sm:py-10">
@@ -264,11 +266,12 @@ export default function FooterSection() {
                 className="ml-2 hover:underline text-[#222222] inline-flex items-center gap-1"
               >
                 Your Privacy Choices
-                <span
-                  aria-hidden
-                  className="ml-1 inline-flex h-[16px] min-w-[26px] items-center justify-center rounded bg-[#1A73E8] px-1 text-[10px] font-semibold text-white"
-                >
-                  ⓘ
+                <span aria-hidden className="ml-1 inline-flex items-center">
+                  <img
+                    src={tt}
+                    alt="tik"
+                    className="h-[16px] w-[25px] rounded object-cover"
+                  />
                 </span>
               </a>
             </div>

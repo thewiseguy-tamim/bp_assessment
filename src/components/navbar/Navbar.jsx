@@ -10,7 +10,7 @@ export default function Navbar() {
   // When scrolled, clicking the compact pill expands the full SearchBar.
   const [forceExpanded, setForceExpanded] = useState(false);
 
-  // If user scrolls back to top, reset expansion (full bar will be visible anyway).
+  // Reset expansion if user scrolls back to top (full bar visible anyway)
   useEffect(() => {
     if (!isScrolled) setForceExpanded(false);
   }, [isScrolled]);
@@ -34,7 +34,7 @@ export default function Navbar() {
     <header
       className={[
         "sticky top-0 z-50 w-full shadow-sm",
-        "bg-white/90 backdrop-blur-sm transition-all duration-300",
+        "bg-white/90 backdrop-blur-sm transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
         isScrolled ? "py-2" : "py-3",
       ].join(" ")}
       role="banner"

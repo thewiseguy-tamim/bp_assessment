@@ -54,22 +54,31 @@ export default function NavbarDesktop({
     return () => document.removeEventListener("mousedown", onClick, true);
   }, [menuOpen]);
 
+  const showCompact = isScrolled && !forceExpanded;
+  const showExpandedRow = !isScrolled || forceExpanded;
+
   return (
     <div className="mx-auto max-w-[1760px] px-6">
-      {/* Top row: logo + center (tabs or compact pill) + actions */}
+      {/* Top row: logo + center (animated: tabs <-> pill) + actions */}
       <div className="flex items-center justify-between gap-4">
         <div className="shrink-0">
           <Logo size="lg" />
         </div>
 
-        {/* Center: Tabs when not scrolled (or when expanded); compact pill when scrolled */}
-        {isScrolled && !forceExpanded ? (
-          <div className="w-full max-w-[640px]">
-            <CollapsedPill onClick={onCompactClick} />
-          </div>
-        ) : (
-          <nav className="relative" aria-label="Primary">
-            <ul ref={navRef} className="flex items-center gap-8">
+        {/* Center container keeps stable height and cross-fades content */}
+        <div className="relative flex-1 flex justify-center min-h-[48px]">
+          {/* Tabs layer */}
+          <nav
+            ref={navRef}
+            className={cls(
+              "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2",
+              "transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
+              showCompact ? "opacity-0 translate-y-1 scale-95 pointer-events-none" : "opacity-100 translate-y-0 scale-100"
+            )}
+            aria-label="Primary"
+            aria-hidden={showCompact ? "true" : "false"}
+          >
+            <ul className="flex items-center gap-8">
               <Tab
                 icon={<Home className="h-6 w-6" />}
                 label="Homes"
@@ -91,14 +100,25 @@ export default function NavbarDesktop({
                 onClick={() => onChangeTab?.("services")}
               />
             </ul>
-            {/* Active indicator */}
             <div
               className="pointer-events-none absolute -bottom-2 h-[3px] w-10 rounded-full bg-black transition-transform duration-300"
               style={{ transform: `translateX(${indicator.left}px)` }}
               aria-hidden
             />
           </nav>
-        )}
+
+          {/* Compact pill layer */}
+          <div
+            className={cls(
+              "absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 w-full max-w-[640px]",
+              "transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
+              showCompact ? "opacity-100 translate-y-0 scale-100" : "opacity-0 -translate-y-1 scale-95 pointer-events-none"
+            )}
+            aria-hidden={showCompact ? "false" : "true"}
+          >
+            <CollapsedPill onClick={onCompactClick} />
+          </div>
+        </div>
 
         {/* Right actions */}
         <div className="flex items-center gap-3">
@@ -133,14 +153,27 @@ export default function NavbarDesktop({
         </div>
       </div>
 
-      {/* Full SearchBar row only when not scrolled or when user expanded the compact pill */}
-      {(!isScrolled || forceExpanded) && (
-        <div className="pt-3">
-          <div className="mx-auto max-w-[980px]">
-            <SearchBar className="mt-1" onSubmit={() => {}} onChange={() => {}} />
-          </div>
+      {/* Full SearchBar row — animated expand/collapse, still part of header */}
+      <AnimatedRow show={showExpandedRow}>
+        <div className="mx-auto max-w-[980px]">
+          <SearchBar className="mt-1" onSubmit={() => {}} onChange={() => {}} />
         </div>
+      </AnimatedRow>
+    </div>
+  );
+}
+
+function AnimatedRow({ show, children }) {
+  // Smooth height + opacity animation for the full SearchBar row
+  return (
+    <div
+      className={cls(
+        "overflow-hidden transition-[max-height,opacity] duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
+        show ? "opacity-100" : "opacity-0"
       )}
+      style={{ maxHeight: show ? 120 : 0 }}
+    >
+      <div className="pt-3">{children}</div>
     </div>
   );
 }
@@ -225,9 +258,7 @@ function UserMenu({ open, anchorRef, menuRef, onClose }) {
     >
       <div className="p-2">
         <Item icon={<HelpCircle className="h-5 w-5" />} label="Help Center" onClick={onClose} />
-
         <Divider />
-
         <div
           className="flex items-start gap-3 rounded-lg p-3 hover:bg-[#F7F7F7] cursor-pointer"
           role="menuitem"
@@ -247,13 +278,10 @@ function UserMenu({ open, anchorRef, menuRef, onClose }) {
             />
           </div>
         </div>
-
         <Item icon={<Share2 className="h-5 w-5" />} label="Refer a Host" onClick={onClose} />
         <Item icon={<Users className="h-5 w-5" />} label="Find a co-host" onClick={onClose} />
         <Item icon={<Gift className="h-5 w-5" />} label="Gift cards" onClick={onClose} />
-
         <Divider />
-
         <Item label="Log in or sign up" onClick={onClose} />
       </div>
     </div>
