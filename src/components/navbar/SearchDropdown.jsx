@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useState, useRef } from "react";
+import React, { useEffect, useMemo, useState } from "react";
 import Button from "../common/Button";
 import {
   X,
@@ -8,83 +8,26 @@ import {
   Mountain,
   Minus,
   Plus,
-  ChevronLeft,
-  ChevronRight,
-  Calendar,
 } from "lucide-react";
+import DatesPanel from "./panels/DatesPanel";
+import MonthsPanel from "./panels/MonthsPanel";
+import FlexiblePanel from "./panels/FlexiblePanel";
 
-// Helpers
+const Z_MODAL = 10000;
+
+// Month helpers used HERE (do not pass null to DatesPanel)
 const startOfMonth = (d) => new Date(d.getFullYear(), d.getMonth(), 1);
-const endOfMonth = (d) => new Date(d.getFullYear(), d.getMonth() + 1, 0);
 const addMonths = (d, m) => new Date(d.getFullYear(), d.getMonth() + m, 1);
-const isSameDay = (a, b) =>
-  a &&
-  b &&
-  a.getFullYear() === b.getFullYear() &&
-  a.getMonth() === b.getMonth() &&
-  a.getDate() === b.getDate();
-const isBetween = (x, s, e) =>
-  s && e && x.getTime() > s.getTime() && x.getTime() < e.getTime();
 
 const SUGGESTIONS = [
-  {
-    id: "nearby",
-    name: "Nearby",
-    tagline: "Find what’s around you",
-    icon: <MapPin className="h-6 w-6 text-[#0074CC]" />,
-  },
-  {
-    id: "toronto",
-    name: "Toronto, Canada",
-    tagline: "For sights like CN Tower",
-    icon: <Building2 className="h-6 w-6 text-[#0074CC]" />,
-  },
-  {
-    id: "bangkok",
-    name: "Bangkok, Thailand",
-    tagline: "For its bustling nightlife",
-    icon: <Landmark className="h-6 w-6 text-[#0074CC]" />,
-  },
-  {
-    id: "london",
-    name: "London, United Kingdom",
-    tagline: "For its stunning architecture",
-    icon: <Landmark className="h-6 w-6 text-[#0074CC]" />,
-  },
-  {
-    id: "nyc",
-    name: "New York, NY",
-    tagline: "For its top-notch dining",
-    icon: <Landmark className="h-6 w-6 text-[#0074CC]" />,
-  },
-  {
-    id: "vancouver",
-    name: "Vancouver, Canada",
-    tagline: "For nature-lovers",
-    icon: <Mountain className="h-6 w-6 text-[#0074CC]" />,
-  },
-  {
-    id: "calgary",
-    name: "Calgary, Canada",
-    tagline: "Known for its skiing",
-    icon: <Mountain className="h-6 w-6 text-[#0074CC]" />,
-  },
+  { id: "nearby", name: "Nearby", tagline: "Find what’s around you", icon: <MapPin className="h-6 w-6 text-[#0074CC]" /> },
+  { id: "toronto", name: "Toronto, Canada", tagline: "For sights like CN Tower", icon: <Building2 className="h-6 w-6 text-[#0074CC]" /> },
+  { id: "bangkok", name: "Bangkok, Thailand", tagline: "For its bustling nightlife", icon: <Landmark className="h-6 w-6 text-[#0074CC]" /> },
+  { id: "london", name: "London, United Kingdom", tagline: "For its stunning architecture", icon: <Landmark className="h-6 w-6 text-[#0074CC]" /> },
+  { id: "nyc", name: "New York, NY", tagline: "For its top-notch dining", icon: <Landmark className="h-6 w-6 text-[#0074CC]" /> },
+  { id: "vancouver", name: "Vancouver, Canada", tagline: "For nature-lovers", icon: <Mountain className="h-6 w-6 text-[#0074CC]" /> },
+  { id: "calgary", name: "Calgary, Canada", tagline: "Known for its skiing", icon: <Mountain className="h-6 w-6 text-[#0074CC]" /> },
 ];
-
-function monthMatrix(monthDate) {
-  const first = startOfMonth(monthDate);
-  const startWeekday = first.getDay();
-  const totalDays = endOfMonth(monthDate).getDate();
-  const cells = [];
-  for (let i = 0; i < startWeekday; i++) cells.push(null);
-  for (let d = 1; d <= totalDays; d++)
-    cells.push(new Date(monthDate.getFullYear(), monthDate.getMonth(), d));
-  while (cells.length % 7 !== 0) cells.push(null);
-  while (cells.length < 42) cells.push(null);
-  return cells;
-}
-
-const Z_MODAL = 10000; // out-rank anything on the page
 
 export default function SearchDropdown({
   open,
@@ -101,11 +44,19 @@ export default function SearchDropdown({
   const [startDate, setStartDate] = useState(value?.checkIn || null);
   const [endDate, setEndDate] = useState(value?.checkOut || null);
   const [flex, setFlex] = useState(value?.flex || 0);
-  const [offset, setOffset] = useState(0);
   const [dateTab, setDateTab] = useState("dates");
   const [guests, setGuests] = useState(
     value?.guests || { adults: 0, children: 0, infants: 0, pets: 0 }
   );
+
+  // Month nav state
+  const [offset, setOffset] = useState(0);
+  const today = useMemo(() => new Date(), []);
+  const leftMonth = useMemo(
+    () => addMonths(startOfMonth(today), offset),
+    [today, offset]
+  );
+  const rightMonth = useMemo(() => addMonths(leftMonth, 1), [leftMonth]);
 
   useEffect(() => {
     if (open) {
@@ -115,11 +66,11 @@ export default function SearchDropdown({
       setStartDate(value?.checkIn || null);
       setEndDate(value?.checkOut || null);
       setFlex(value?.flex || 0);
-      setOffset(0);
       setDateTab("dates");
       setGuests(
         value?.guests || { adults: 0, children: 0, infants: 0, pets: 0 }
       );
+      setOffset(0);
     } else {
       setShow(false);
     }
@@ -133,6 +84,7 @@ export default function SearchDropdown({
     return () => window.removeEventListener("keydown", onKey);
   }, [open, onClose]);
 
+  // Position under the SearchBar + align to left/center/right based on active section
   const anchoredStyle = useMemo(() => {
     const el = anchorRef?.current;
     if (!el) return { zIndex: Z_MODAL };
@@ -141,53 +93,28 @@ export default function SearchDropdown({
     const vpW = window.innerWidth;
     const pad = 16;
     const top = rect.bottom + gap;
-    if (active === "where")
-      return {
-        position: "fixed",
-        top,
-        left: Math.max(pad, rect.left),
-        zIndex: Z_MODAL,
-      };
-    if (active === "who")
-      return {
-        position: "fixed",
-        top,
-        right: Math.max(pad, vpW - rect.right),
-        left: "auto",
-        zIndex: Z_MODAL,
-      };
-    const center = rect.left + rect.width / 2;
-    return {
-      position: "fixed",
-      top,
-      left: center,
-      transform: "translateX(-50%)",
-      zIndex: Z_MODAL,
-    };
-  }, [anchorRef, active]);
 
-  const today = useMemo(() => new Date(), []);
-  const leftMonth = useMemo(
-    () => addMonths(startOfMonth(today), offset),
-    [today, offset]
-  );
-  const rightMonth = useMemo(() => addMonths(leftMonth, 1), [leftMonth]);
+    if (active === "where")
+      return { position: "fixed", top, left: Math.max(pad, rect.left), zIndex: Z_MODAL };
+
+    if (active === "who")
+      return { position: "fixed", top, right: Math.max(pad, vpW - rect.right), left: "auto", zIndex: Z_MODAL };
+
+    const center = rect.left + rect.width / 2;
+    return { position: "fixed", top, left: center, transform: "translateX(-50%)", zIndex: Z_MODAL };
+  }, [anchorRef, active]);
 
   const handleDayClick = (d) => {
     if (!d) return;
-    const todayMid = new Date(
-      today.getFullYear(),
-      today.getMonth(),
-      today.getDate()
-    );
-    const dm = new Date(d.getFullYear(), d.getMonth(), d.getDate());
-    if (dm < todayMid) return;
+    const tMid = new Date(today.getFullYear(), today.getMonth(), today.getDate());
+    const dMid = new Date(d.getFullYear(), d.getMonth(), d.getDate());
+    if (dMid < tMid) return;
     if (!startDate || (startDate && endDate)) {
       setStartDate(d);
       setEndDate(null);
       return;
     }
-    if (dm < startDate) {
+    if (dMid < new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate())) {
       setStartDate(d);
       return;
     }
@@ -204,15 +131,13 @@ export default function SearchDropdown({
   return (
     <>
       <div
-        className={`fixed inset-0 bg-black/20 transition-opacity ${
-          show ? "opacity-100" : "opacity-0"
-        }`}
+        className={`fixed inset-0 bg-black/20 transition-opacity ${show ? "opacity-100" : "opacity-0"}`}
         style={{ zIndex: Z_MODAL - 1 }}
         onClick={onClose}
         aria-hidden="true"
       />
 
-      {/* Desktop */}
+      {/* Desktop anchored dropdown */}
       <div style={anchoredStyle} className="hidden lg:block">
         <div
           className={[
@@ -236,15 +161,9 @@ export default function SearchDropdown({
             </button>
           </div>
 
-          {(active === "checkin" ||
-            active === "checkout" ||
-            active === "when") && (
+          {(active === "checkin" || active === "checkout" || active === "when") && (
             <div className="mb-6 flex w-full items-center justify-center">
-              <div
-                role="tablist"
-                aria-label="Date selection type"
-                className="rounded-full bg-[#EBEBEB] p-1 shadow-sm"
-              >
+              <div role="tablist" aria-label="Date selection type" className="rounded-full bg-[#EBEBEB] p-1 shadow-sm">
                 {["dates", "months", "flexible"].map((t) => {
                   const isActive = dateTab === t;
                   return (
@@ -258,9 +177,7 @@ export default function SearchDropdown({
                       }}
                       className={[
                         "px-8 py-3 text-[14px] font-medium rounded-full transition outline-none focus-visible:ring-2 focus-visible:ring-black/10",
-                        isActive
-                          ? "bg-white shadow-sm text-black font-semibold"
-                          : "text-[#222222] hover:text-[#717171]",
+                        isActive ? "bg-white shadow-sm text-black font-semibold" : "text-[#222222] hover:text-[#717171]",
                       ].join(" ")}
                     >
                       {t[0].toUpperCase() + t.slice(1)}
@@ -272,55 +189,31 @@ export default function SearchDropdown({
           )}
 
           {active === "where" && (
-            <WherePanel
-              query={query}
-              setQuery={setQuery}
-              location={location}
-              setLocation={setLocation}
+            <WherePanel query={query} setQuery={setQuery} location={location} setLocation={setLocation} />
+          )}
+
+          {(active === "checkin" || active === "checkout" || active === "when") && dateTab === "dates" && (
+            <DatesPanel
+              leftMonth={leftMonth}
+              rightMonth={rightMonth}
+              startDate={startDate}
+              endDate={endDate}
+              onDayClick={handleDayClick}
+              flex={flex}
+              setFlex={setFlex}
+              setOffset={setOffset}
             />
           )}
 
-          {(active === "checkin" ||
-            active === "checkout" ||
-            active === "when") &&
-            dateTab === "dates" && (
-              <DatesPanel
-                leftMonth={leftMonth}
-                rightMonth={rightMonth}
-                startDate={startDate}
-                endDate={endDate}
-                onDayClick={handleDayClick}
-                flex={flex}
-                setFlex={setFlex}
-                setOffset={setOffset}
-              />
-            )}
-
-          {(active === "checkin" ||
-            active === "checkout" ||
-            active === "when") &&
-            dateTab === "months" && (
-              <MonthsPanel
-                startDate={startDate}
-                endDate={endDate}
-                setStartDate={setStartDate}
-                setEndDate={setEndDate}
-              />
-            )}
-
-          {(active === "checkin" ||
-            active === "checkout" ||
-            active === "when") &&
-            dateTab === "flexible" && (
-              <FlexiblePanel
-                setStartDate={setStartDate}
-                setEndDate={setEndDate}
-              />
-            )}
-
-          {active === "who" && (
-            <GuestsPanel guests={guests} setGuests={setGuests} />
+          {(active === "checkin" || active === "checkout" || active === "when") && dateTab === "months" && (
+            <MonthsPanel startDate={startDate} endDate={endDate} setStartDate={setStartDate} setEndDate={setEndDate} />
           )}
+
+          {(active === "checkin" || active === "checkout" || active === "when") && dateTab === "flexible" && (
+            <FlexiblePanel setStartDate={setStartDate} setEndDate={setEndDate} />
+          )}
+
+          {active === "who" && <GuestsPanel guests={guests} setGuests={setGuests} />}
 
           <div className="pointer-events-none absolute right-8 bottom-6">
             <div className="pointer-events-auto">
@@ -334,9 +227,7 @@ export default function SearchDropdown({
 
       {/* Mobile sheet */}
       <div
-        className={`fixed inset-x-0 bottom-0 block lg:hidden p-4 transition-transform duration-300 ${
-          show ? "translate-y-0" : "translate-y-6"
-        }`}
+        className={`fixed inset-x-0 bottom-0 block lg:hidden p-4 transition-transform duration-300 ${show ? "translate-y-0" : "translate-y-6"}`}
         style={{ zIndex: Z_MODAL }}
       >
         <div className="max-h-[85vh] overflow-hidden rounded-[32px] bg-white shadow-[0_8px_28px_rgba(0,0,0,0.15)] ring-1 ring-black/5 w-[min(920px,calc(100vw-64px))] mx-auto">
@@ -359,17 +250,10 @@ export default function SearchDropdown({
 
           <div className="p-6">
             {active === "where" && (
-              <WherePanel
-                query={query}
-                setQuery={setQuery}
-                location={location}
-                setLocation={setLocation}
-              />
+              <WherePanel query={query} setQuery={setQuery} location={location} setLocation={setLocation} />
             )}
 
-            {(active === "checkin" ||
-              active === "checkout" ||
-              active === "when") && (
+            {(active === "checkin" || active === "checkout" || active === "when") && (
               <>
                 <div className="mb-4 flex w-full items-center justify-center">
                   <div className="rounded-full bg-[#EBEBEB] p-1 shadow-sm">
@@ -386,9 +270,7 @@ export default function SearchDropdown({
                           }}
                           className={[
                             "px-6 py-2.5 text-[14px] font-medium rounded-full transition outline-none focus-visible:ring-2 focus-visible:ring-black/10",
-                            isActive
-                              ? "bg-white shadow-sm text-black font-semibold"
-                              : "text-[#222222] hover:text-[#717171]",
+                            isActive ? "bg-white shadow-sm text-black font-semibold" : "text-[#222222] hover:text-[#717171]",
                           ].join(" ")}
                         >
                           {t[0].toUpperCase() + t.slice(1)}
@@ -401,7 +283,7 @@ export default function SearchDropdown({
                 {dateTab === "dates" && (
                   <DatesPanel
                     leftMonth={leftMonth}
-                    rightMonth={null}
+                    rightMonth={null}     // one month on mobile
                     startDate={startDate}
                     endDate={endDate}
                     onDayClick={handleDayClick}
@@ -411,25 +293,13 @@ export default function SearchDropdown({
                   />
                 )}
                 {dateTab === "months" && (
-                  <MonthsPanel
-                    startDate={startDate}
-                    endDate={endDate}
-                    setStartDate={setStartDate}
-                    setEndDate={setEndDate}
-                  />
+                  <MonthsPanel startDate={startDate} endDate={endDate} setStartDate={setStartDate} setEndDate={setEndDate} />
                 )}
-                {dateTab === "flexible" && (
-                  <FlexiblePanel
-                    setStartDate={setStartDate}
-                    setEndDate={setEndDate}
-                  />
-                )}
+                {dateTab === "flexible" && <FlexiblePanel setStartDate={setStartDate} setEndDate={setEndDate} />}
               </>
             )}
 
-            {active === "who" && (
-              <GuestsPanel guests={guests} setGuests={setGuests} />
-            )}
+            {active === "who" && <GuestsPanel guests={guests} setGuests={setGuests} />}
           </div>
 
           <div className="flex items-center justify-end border-t border-[#EBEBEB] px-6 py-4">
@@ -443,8 +313,7 @@ export default function SearchDropdown({
   );
 }
 
-/* Sub-panels */
-
+/* Where + Guests helpers (unchanged) */
 function WherePanel({ query, setQuery, location, setLocation }) {
   const filtered = useMemo(() => {
     if (!query) return SUGGESTIONS;
@@ -495,415 +364,6 @@ function WherePanel({ query, setQuery, location, setLocation }) {
   );
 }
 
-function DatesPanel({
-  leftMonth,
-  rightMonth,
-  startDate,
-  endDate,
-  onDayClick,
-  flex,
-  setFlex,
-  setOffset,
-}) {
-  const DAYS = ["S", "M", "T", "W", "T", "F", "S"];
-  const quick = [0, 1, 2, 3, 7, 14];
-
-  const Month = (monthDate) => {
-    const label = new Intl.DateTimeFormat(undefined, {
-      month: "long",
-      year: "numeric",
-    }).format(monthDate);
-    const cells = monthMatrix(monthDate);
-    const today = new Date();
-    const todayMid = new Date(
-      today.getFullYear(),
-      today.getMonth(),
-      today.getDate()
-    );
-
-    return (
-      <div className="w-full">
-        <div className="mb-4 text-center text-[18px] font-semibold text-[#222222]">
-          {label}
-        </div>
-        <div className="grid grid-cols-7 gap-y-2 text-center text-[12px] font-semibold uppercase text-[#717171]">
-          {DAYS.map((d) => (
-            <div key={d} className="py-1">
-              {d}
-            </div>
-          ))}
-        </div>
-        <div className="mt-1 grid grid-cols-7 gap-y-1">
-          {cells.map((d, i) => {
-            const disabled = !d || d < todayMid;
-            const start = d && startDate && isSameDay(d, startDate);
-            const end = d && endDate && isSameDay(d, endDate);
-            const between = d && startDate && endDate && isBetween(d, startDate, endDate);
-
-            return (
-              <button
-                key={i}
-                type="button"
-                disabled={disabled}
-                onClick={() => onDayClick(d)}
-                className={[
-                  "mx-auto my-1 flex h-12 w-12 items-center justify-center rounded-full text-[14px] transition",
-                  disabled
-                    ? "text-[#DDDDDD] cursor-not-allowed"
-                    : "text-[#222222] hover:bg-[#F7F7F7]",
-                  start || end ? "bg-black text-white hover:bg-black" : "",
-                  !start && !end && between ? "bg-[#F7F7F7] text-black" : "",
-                ].join(" ")}
-              >
-                {d ? d.getDate() : ""}
-              </button>
-            );
-          })}
-        </div>
-      </div>
-    );
-  };
-
-  return (
-    <div className="w-[min(920px,calc(100vw-64px))] overflow-x-hidden">
-      <div className="mb-2 flex items-center justify-between">
-        <button
-          type="button"
-          onClick={() => setOffset((v) => Math.max(0, v - 1))}
-          className="hidden lg:inline-flex h-9 w-9 items-center justify-center rounded-full hover:bg-[#F7F7F7]"
-          aria-label="Previous month"
-        >
-          <ChevronLeft className="h-5 w-5" />
-        </button>
-        <div className="grow" />
-        <button
-          type="button"
-          onClick={() => setOffset((v) => v + 1)}
-          className="inline-flex h-9 w-9 items-center justify-center rounded-full hover:bg-[#F7F7F7]"
-          aria-label="Next month"
-        >
-          <ChevronRight className="h-5 w-5" />
-        </button>
-      </div>
-
-      <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-        {Month(leftMonth)}
-        {rightMonth && <div className="hidden lg:block">{Month(rightMonth)}</div>}
-      </div>
-
-      <div className="mt-6 flex flex-wrap items-center justify-center gap-2">
-        {quick.map((d) => {
-          const active = flex === d;
-          return (
-            <button
-              key={d}
-              type="button"
-              onClick={() => setFlex(d)}
-              className={[
-                "rounded-full border px-4 py-2 text-[14px] transition",
-                active
-                  ? "bg-black text-white border-black"
-                  : "bg-white text-black border-[#B0B0B0] hover:border-[#717171]",
-              ].join(" ")}
-            >
-              {d === 0 ? "Exact dates" : `± ${d} ${d === 1 ? "day" : "days"}`}
-            </button>
-          );
-        })}
-      </div>
-    </div>
-  );
-}
-
-function MonthsPanel({ startDate, endDate, setStartDate, setEndDate }) {
-  const [months, setMonths] = useState(3);
-
-  const baseStart = useMemo(() => {
-    if (startDate) return new Date(startDate.getFullYear(), startDate.getMonth(), 1);
-    const now = new Date();
-    return new Date(now.getFullYear(), now.getMonth() + 1, 1);
-  }, [startDate]);
-
-  useEffect(() => {
-    const s = baseStart;
-    const e = new Date(s.getFullYear(), s.getMonth() + months, 1);
-    setStartDate?.(s);
-    setEndDate?.(e);
-  }, [months, baseStart, setStartDate, setEndDate]);
-
-  const clamp = (n, a, b) => Math.min(b, Math.max(a, n));
-  const dialRef = useRef(null);
-  const [dragging, setDragging] = useState(false);
-
-  // Arc config: 0deg at top; leave a 60deg gap (30deg on each side)
-  const START = 30;
-  const SWEEP = 300;
-
-  const toAngleFromCenterTop = (cx, cy, x, y) => {
-    const rad = Math.atan2(y - cy, x - cx);
-    let deg = (rad * 180) / Math.PI; // -180..180, 0 at 3 o’clock
-    deg += 90; // move 0 to 12 o’clock
-    if (deg < 0) deg += 360;
-    return deg; // 0..360 from top
-  };
-
-  const onPointer = (e) => {
-    if (!dialRef.current) return;
-    const rect = dialRef.current.getBoundingClientRect();
-    const cx = rect.left + rect.width / 2;
-    const cy = rect.top + rect.height / 2;
-    const angleTop = toAngleFromCenterTop(cx, cy, e.clientX, e.clientY);
-    let raw = ((angleTop - START + 360) % 360) / SWEEP;
-    raw = clamp(raw, 0, 1);
-    const snap = Math.max(1, Math.min(12, Math.round(raw * 12)));
-    setMonths(snap);
-  };
-
-  const onPointerDown = (e) => {
-    e.preventDefault();
-    setDragging(true);
-    onPointer(e);
-    window.addEventListener("pointermove", onPointer);
-    window.addEventListener("pointerup", onPointerUp, { once: true });
-  };
-  const onPointerUp = () => {
-    setDragging(false);
-    window.removeEventListener("pointermove", onPointer);
-  };
-
-  const onKeyDown = (e) => {
-    if (e.key === "ArrowRight" || e.key === "ArrowUp") {
-      e.preventDefault();
-      setMonths((m) => clamp(m + 1, 1, 12));
-    }
-    if (e.key === "ArrowLeft" || e.key === "ArrowDown") {
-      e.preventDefault();
-      setMonths((m) => clamp(m - 1, 1, 12));
-    }
-  };
-
-  // Sizing
-  const handleSize = 44;
-  const trackInset = 16;
-  const [radius, setRadius] = useState(126);
-  useEffect(() => {
-    const update = () => {
-      if (!dialRef.current) return;
-      const w = dialRef.current.offsetWidth;
-      const r = w / 2 - trackInset - handleSize / 2;
-      setRadius(Math.max(70, r));
-    };
-    update();
-    window.addEventListener("resize", update);
-    return () => window.removeEventListener("resize", update);
-  }, []);
-
-  const angleFromTop = START + (months / 12) * SWEEP;
-
-  const fmt = (d) =>
-    new Intl.DateTimeFormat(undefined, {
-      month: "short",
-      day: "numeric",
-      year: "numeric",
-    }).format(d);
-
-  return (
-    <div className="w-[min(920px,calc(100vw-64px))] min-h-[600px]">
-      {/* REMOVE any extra segmented tabs here — they are already rendered by the parent */}
-
-      <div className="mb-6 text-center text-[20px] font-semibold text-[#222222]">
-        When’s your trip?
-      </div>
-
-      <div
-        ref={dialRef}
-        className="relative mx-auto my-6 h-[340px] w-[340px] select-none rounded-full"
-        role="slider"
-        aria-label="Select number of months"
-        aria-valuemin={1}
-        aria-valuemax={12}
-        aria-valuenow={months}
-        tabIndex={0}
-        onKeyDown={onKeyDown}
-        onPointerDown={onPointerDown}
-        style={{
-          // from -90deg => 0deg at top
-          background: `conic-gradient(from -90deg, #FF385C ${angleFromTop}deg, rgba(0,0,0,0.06) ${angleFromTop}deg)`,
-          boxShadow:
-            "inset 0 18px 40px rgba(0,0,0,.10), inset 0 -10px 18px rgba(0,0,0,.08), 0 10px 30px rgba(0,0,0,.10)",
-        }}
-      >
-        {/* Center puck */}
-        <div className="absolute left-1/2 top-1/2 h-[168px] w-[168px] -translate-x-1/2 -translate-y-1/2 rounded-full bg-white shadow-[0_16px_32px_rgba(0,0,0,.18),_inset_0_-2px_0_rgba(0,0,0,.04)] flex items-center justify-center">
-          <div className="text-center">
-            <div className="text-[56px] leading-none font-extrabold text-[#111]">{months}</div>
-            <div className="mt-1 text-sm text-[#6B7280]">{months === 1 ? "month" : "months"}</div>
-          </div>
-        </div>
-
-        {/* 12 tick dots on same radius */}
-        {Array.from({ length: 12 }).map((_, i) => {
-          const degFromTop = (i / 12) * 360;
-          const rad = (degFromTop * Math.PI) / 180;
-          const x = radius * Math.sin(rad);
-          const y = -radius * Math.cos(rad);
-          const isFilled = i <= months - 1;
-          return (
-            <span
-              key={i}
-              className="absolute h-1.5 w-1.5 rounded-full"
-              style={{
-                left: `calc(50% + ${x}px)`,
-                top: `calc(50% + ${y}px)`,
-                transform: "translate(-50%, -50%)",
-                backgroundColor: isFilled ? "rgba(17,24,39,0.35)" : "rgba(17,24,39,0.18)",
-              }}
-            />
-          );
-        })}
-
-        {/* Handle: anchor to dial center, then rotate/translate */}
-        <div
-          className={[
-            "absolute rounded-full bg-white shadow-[0_6px_16px_rgba(0,0,0,.25),_inset_0_-2px_0_rgba(0,0,0,.06)] transition-transform",
-            dragging ? "cursor-grabbing" : "cursor-grab",
-          ].join(" ")}
-          style={{
-            height: `${handleSize}px`,
-            width: `${handleSize}px`,
-            left: "50%",
-            top: "50%",
-            transform: `translate(-50%, -50%) rotate(${angleFromTop - 90}deg) translate(${radius}px) rotate(-${angleFromTop - 90}deg)`,
-            border: "5px solid #ff3e66",
-            zIndex: 1,
-          }}
-        />
-      </div>
-
-      <div className="mt-6 text-center text-[15px] text-[#222222]">
-        <span className="underline underline-offset-[6px] decoration-[1.5px] decoration-black/60">
-          {fmt(startDate || baseStart)}
-        </span>
-        <span className="mx-2 text-[#717171]">to</span>
-        <span className="underline underline-offset-[6px] decoration-[1.5px] decoration-black/60">
-          {fmt(endDate || new Date(baseStart.getFullYear(), baseStart.getMonth() + months, 1))}
-        </span>
-      </div>
-    </div>
-  );
-}
-
-function FlexiblePanel({ setStartDate, setEndDate }) {
-  const [length, setLength] = useState("weekend");
-  const monthsRef = useRef(null);
-
-  const months = useMemo(() => {
-    const now = new Date();
-    return Array.from({ length: 12 }, (_, i) => {
-      const d = new Date(now.getFullYear(), now.getMonth() + i, 1);
-      return {
-        id: i,
-        date: d,
-        label: new Intl.DateTimeFormat(undefined, {
-          month: "long",
-          year: "numeric",
-        }).format(d),
-      };
-    });
-  }, []);
-
-  const chooseMonth = (d) => {
-    const s = new Date(d.getFullYear(), d.getMonth(), 1);
-    const nights = length === "weekend" ? 2 : length === "week" ? 7 : 30;
-    const e = new Date(s);
-    e.setDate(e.getDate() + nights);
-    setStartDate(s);
-    setEndDate(e);
-  };
-
-  const scrollBy = (dir = 1) => {
-    const el = monthsRef.current;
-    if (!el) return;
-    el.scrollBy({
-      left: dir * Math.min(600, el.clientWidth * 0.8),
-      behavior: "smooth",
-    });
-  };
-
-  return (
-    <div className="w-[min(920px,calc(100vw-64px))] min-h-[600px]">
-      <div className="mb-8 text-center text-[24px] font-bold text-[#222222]">
-        How long would you like to stay?
-      </div>
-
-      <div className="mb-8 flex items-center justify-center gap-3">
-        {[
-          { key: "weekend", label: "Weekend" },
-          { key: "week", label: "Week" },
-          { key: "month", label: "Month" },
-        ].map((opt) => {
-          const active = length === opt.key;
-          return (
-            <button
-              key={opt.key}
-              type="button"
-              onClick={() => setLength(opt.key)}
-              className={[
-                "rounded-full border px-7 py-3 text-[16px] transition",
-                active
-                  ? "bg-black text-white border-black"
-                  : "bg-white text-black border-[#B0B0B0] hover:border-[#222222] hover:shadow",
-              ].join(" ")}
-            >
-              {opt.label}
-            </button>
-          );
-        })}
-      </div>
-
-      <div className="mb-6 text-center text-[24px] font-bold text-[#222222]">
-        Go anytime
-      </div>
-
-      <div className="relative pr-[56px]">
-        <button
-          type="button"
-          onClick={() => scrollBy(1)}
-          aria-label="Scroll months"
-          className="absolute right-0 top-1/2 z-10 -translate-y-1/2 translate-x-1/2 rounded-full border border-[#DDDDDD] bg-white p-3 shadow hover:shadow-md"
-        >
-          <ChevronRight className="h-5 w-5 text-[#222222]" />
-        </button>
-        <div className="pointer-events-none absolute right-0 top-0 h-full w-10 bg-gradient-to-l from-white to-transparent" />
-
-        <div
-          ref={monthsRef}
-          className="flex gap-4 overflow-x-auto pb-2 pr-16 [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
-        >
-          {months.map((m) => (
-            <button
-              key={m.id}
-              type="button"
-              onClick={() => chooseMonth(m.date)}
-              className="w-[140px] h-[160px] shrink-0 rounded-[16px] border border-[#DDDDDD] bg-white p-7 text-center transition hover:shadow-[0_4px_12px_rgba(0,0,0,0.15)] hover:-translate-y-[4px] hover:border-black"
-            >
-              <div className="mx-auto mb-5 flex h-14 w-14 items-center justify-center rounded-full bg-[#F7F7F7]">
-                <Calendar className="h-6 w-6 text-[#717171]" />
-              </div>
-              <div className="text-[17px] font-bold text-[#222222]">
-                {m.label.split(" ")[0]}
-              </div>
-              <div className="text-[14px] text-[#717171]">
-                {m.label.split(" ").slice(1).join(" ")}
-              </div>
-            </button>
-          ))}
-        </div>
-      </div>
-    </div>
-  );
-}
-
 function GuestsPanel({ guests, setGuests }) {
   const rows = [
     { key: "adults", title: "Adults", sub: "Ages 13 or above" },
@@ -923,9 +383,7 @@ function GuestsPanel({ guests, setGuests }) {
           return (
             <div key={r.key} className="flex items-center justify-between py-6">
               <div>
-                <div className="text-[16px] font-semibold text-[#222222]">
-                  {r.title}
-                </div>
+                <div className="text-[16px] font-semibold text-[#222222]">{r.title}</div>
                 <div className="text-[14px] text-[#717171]">{r.sub}</div>
               </div>
               <div className="flex items-center gap-3">
