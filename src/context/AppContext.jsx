@@ -77,7 +77,7 @@ export function AppProvider({ children }) {
           payload: { ...initialState.search, ...session, startDate, endDate },
         });
       }
-    } catch {}
+    } catch {console.error();}
   }, []);
 
   // Persist wishlist

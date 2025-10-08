@@ -1,4 +1,4 @@
-import React, { useEffect, useMemo, useRef, useState } from "react";
+import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
 import Logo from "../common/Logo";
 import SearchBar from "./SearchBar";
 import {
@@ -36,8 +36,8 @@ export default function NavbarDesktop({
   const navRef = useRef(null);
   const [indicator, setIndicator] = useState({ left: 0 });
 
-  // Keep underline in sync
-  useEffect(() => {
+  // Centralized measurement so we can reuse on resize
+  const measureIndicator = useCallback(() => {
     const root = navRef.current;
     if (!root) return;
     const items = Array.from(root.querySelectorAll("[data-tab]"));
@@ -48,6 +48,18 @@ export default function NavbarDesktop({
     const parent = root.getBoundingClientRect();
     setIndicator({ left: rect.left - parent.left + rect.width / 2 - 20 });
   }, [activeTab]);
+
+  // Keep underline in sync with active tab
+  useEffect(() => {
+    measureIndicator();
+  }, [measureIndicator]);
+
+  // Recalculate underline on resize so it stays centered
+  useEffect(() => {
+    const onResize = () => measureIndicator();
+    window.addEventListener("resize", onResize);
+    return () => window.removeEventListener("resize", onResize);
+  }, [measureIndicator]);
 
   // Interpolated width of the center search container
   const currentWidth = useMemo(() => {
@@ -198,6 +210,12 @@ function CollapsedPill({ onClick }) {
     <button
       type="button"
       onClick={onClick}
+      onKeyDown={(e) => {
+        if (e.key === "Enter" || e.key === " ") {
+          e.preventDefault();
+          onClick?.();
+        }
+      }}
       aria-label="Expand search"
       className={cls(
         "w-full rounded-full border border-[#DDDDDD] bg-white shadow-sm transition-all hover:shadow-md",

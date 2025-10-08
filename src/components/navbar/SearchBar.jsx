@@ -2,7 +2,6 @@ import React, { useMemo, useRef, useState } from "react";
 import { Search as SearchIcon } from "lucide-react";
 import SearchDropdown from "./SearchDropdown";
 
-// Single, clean implementation of SearchBar
 export default function SearchBar({ value, onChange, onSubmit, className = "" }) {
   const [searchBarMode, setSearchBarMode] = useState("default");
   const [activeSection, setActiveSection] = useState(null);
@@ -55,34 +54,27 @@ export default function SearchBar({ value, onChange, onSubmit, className = "" })
   };
 
   const openDropdown = (sectionKey) => {
-    // Rule 1: Check in/Check out opens Dates, bar stays 4-section
     if (sectionKey === "checkin" || sectionKey === "checkout") {
       setSearchBarMode("default");
       setActiveSection(sectionKey);
       setOpen(true);
       return;
     }
-    // "When" appears only after Months/Flexible tab is chosen
     if (sectionKey === "when") {
       setActiveSection("when");
       setOpen(true);
       return;
     }
-    // Where/Who
     setActiveSection(sectionKey);
     setOpen(true);
   };
 
-  // Called by dropdown when tabs change
   const handleTabChange = (tab) => {
     if (tab === "months" || tab === "flexible") {
-      // Rule 2: transform to When
       setSearchBarMode("when-active");
       setActiveSection("when");
     } else {
-      // Rule 3: Dates -> revert to 4-section
       setSearchBarMode("default");
-      // Keep focus on original section if user came from checkin/checkout
       if (activeSection === "when") setActiveSection("checkin");
     }
   };
@@ -94,7 +86,6 @@ export default function SearchBar({ value, onChange, onSubmit, className = "" })
     if (partial?.endDate !== undefined) next.checkOut = partial.endDate;
     if (partial?.guests !== undefined) next.guests = partial.guests;
     if (partial?.flex !== undefined) next.flex = partial.flex;
-
     setState(next);
     onChange?.(next);
   };
@@ -117,7 +108,6 @@ export default function SearchBar({ value, onChange, onSubmit, className = "" })
   };
 
   const isWhenMode = searchBarMode === "when-active";
-
   const gridDefault = "grid-cols-[1fr_1fr_1fr_1fr]";
   const gridWhen = "grid-cols-[30%_45%_25%]";
 
@@ -196,34 +186,21 @@ export default function SearchBar({ value, onChange, onSubmit, className = "" })
           </div>
         )}
 
-        <div
-          className={[
-            "ml-2 overflow-hidden transition-all duration-300 ease-[cubic-bezier(0.4,0,0.2,1)]",
-            isWhenMode ? "w-[120px]" : "w-14",
-          ].join(" ")}
-        >
+        {/* Right: round Search icon */}
+        <div className="ml-2 w-14">
           <button
             type="button"
             onClick={submitSearch}
             aria-label="Search"
             className={[
-              "h-14 w-full rounded-full bg-[#E61E4D] text-white",
-              "flex items-center justify-center gap-2",
+              "h-14 w-14 rounded-full bg-[#E61E4D] text-white",
+              "flex items-center justify-center",
               "border border-[#DDDDDD]",
               "transition hover:bg-[#D70466] hover:scale-[1.04] shadow-sm",
               "focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/10",
             ].join(" ")}
           >
             <SearchIcon className="h-5 w-5" />
-            <span
-              className={[
-                "whitespace-nowrap text-[16px] font-semibold",
-                "transition-opacity duration-250",
-                isWhenMode ? "opacity-100" : "opacity-0",
-              ].join(" ")}
-            >
-              Search
-            </span>
           </button>
         </div>
       </div>
@@ -236,6 +213,7 @@ export default function SearchBar({ value, onChange, onSubmit, className = "" })
         onApply={handleApply}
         onClose={closeDropdown}
         onTabChange={handleTabChange}
+        onActiveSectionChange={setActiveSection}
       />
     </div>
   );
