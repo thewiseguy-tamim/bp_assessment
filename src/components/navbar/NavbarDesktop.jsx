@@ -1,13 +1,14 @@
 import React, { useEffect, useMemo, useRef, useState, useCallback } from "react";
+import Lottie from "lottie-react";
+import homes from "../../assets/homes.json";
+import baloon from "../../assets/baloon.json";
+import bell from "../../assets/bell.json";
+
 import Logo from "../common/Logo";
 import SearchBar from "./SearchBar";
 import {
-  Home,
-  PartyPopper,
-  ConciergeBell,
   Globe,
   Menu,
-  User,
   HelpCircle,
   Gift,
   Share2,
@@ -18,14 +19,16 @@ const cls = (...a) => a.filter(Boolean).join(" ");
 
 // Control the visual morph (do not change layout)
 const WIDE_WIDTH = 980;          // px when fully expanded (top of page)
-// Collapsed target fraction and safe minimum
-const COLLAPSED_FRAC = 0.38; // 38% of expanded width
-const MIN_COLLAPSED = 480; // safe floor so it never gets too tiny
+const COLLAPSED_FRAC = 0.38;     // 38% of expanded width
+const MIN_COLLAPSED = 480;       // safe floor so it never gets too tiny
 const PILL_WIDTH_TARGET = Math.max(MIN_COLLAPSED, Math.round(WIDE_WIDTH * COLLAPSED_FRAC));
 const SWITCH_AT = 0.35;          // threshold to swap SearchBar -> Pill (0..1)
 
-// A concrete height for the tabs row (used to truly collapse height)
-const TAB_ROW_H = 36;            // px of the tabs row content (adjust if your tabs are taller)
+// Taller row so bigger Lotties aren’t clipped when expanded
+const TAB_ROW_H = 72;
+
+// Underline width (short bar like the screenshot)
+const UNDERLINE_W = 115; // px
 
 export default function NavbarDesktop({
   progress,        // 0..1 (0 wide / 1 pill) – passed from Navbar.jsx
@@ -40,13 +43,19 @@ export default function NavbarDesktop({
   const measureIndicator = useCallback(() => {
     const root = navRef.current;
     if (!root) return;
+
     const items = Array.from(root.querySelectorAll("[data-tab]"));
     const idx = ["homes", "experiences", "services"].indexOf(activeTab);
     const el = items[idx];
     if (!el) return;
-    const rect = el.getBoundingClientRect();
-    const parent = root.getBoundingClientRect();
-    setIndicator({ left: rect.left - parent.left + rect.width / 2 - 20 });
+
+    // Measure both Lottie + label as one group
+    const measureEl = el.querySelector("[data-measure]") || el;
+    const parentRect = root.getBoundingClientRect();
+    const rect = measureEl.getBoundingClientRect();
+
+    const left = rect.left - parentRect.left + rect.width / 2 - UNDERLINE_W / 2;
+    setIndicator({ left });
   }, [activeTab]);
 
   // Keep underline in sync with active tab
@@ -64,15 +73,14 @@ export default function NavbarDesktop({
   // Interpolated width of the center search container
   const currentWidth = useMemo(() => {
     const t = Math.min(1, Math.max(0, progress));
-    // Smoothly interpolate from wide to our 50% target
     return Math.round(WIDE_WIDTH + (PILL_WIDTH_TARGET - WIDE_WIDTH) * t);
   }, [progress]);
 
   // Tabs motion (fade + real height collapse so the search moves up)
   const tabsStyle = useMemo(() => {
     const t = Math.min(1, Math.max(0, progress));
-    const opacity = 1 - Math.min(1, t * 1.05);         // fade out slightly faster
-    const maxH = Math.max(0, (1 - t) * TAB_ROW_H);      // 36px -> 0px
+    const opacity = 1 - Math.min(1, t * 1.05);
+    const maxH = Math.max(0, (1 - t) * TAB_ROW_H);
     return {
       opacity,
       maxHeight: `${maxH}px`,
@@ -82,11 +90,11 @@ export default function NavbarDesktop({
     };
   }, [progress]);
 
-  // Search container: reduce the top margin proportionally so it slides up neatly
+  // Search container vertical offset
   const searchContainerStyle = useMemo(() => {
     const t = Math.min(1, Math.max(0, progress));
-    const baseMt = 8;                        // mt-2 = 8px baseline
-    const mt = Math.max(0, baseMt * (1 - t)); // 8px -> 0px
+    const baseMt = 5; // adjust if you want more room below the tabs
+    const mt = Math.max(0, baseMt * (1 - t));
     return {
       width: currentWidth,
       marginTop: `${mt}px`,
@@ -103,49 +111,50 @@ export default function NavbarDesktop({
         <Logo size="lg" />
       </div>
 
-      {/* Center column: tabs above (fade + height collapse), resizable search below */}
+      {/* Center column */}
       <div className="col-start-2 flex flex-col items-center justify-self-center">
         {/* Icon tabs row */}
         <nav
           ref={navRef}
-          className="relative will-change-[opacity] transition-opacity duration-150 ease-linear"
+          className="relative pb-0  will-change-[opacity] transition-opacity duration-150 ease-linear"
           style={tabsStyle}
           aria-label="Primary"
           aria-hidden={tabsStyle.opacity <= 0.02 ? "true" : "false"}
         >
           <ul className="flex items-center gap-8">
             <Tab
-              icon={<Home className="h-6 w-6" />}
+              icon={<Lottie animationData={homes} loop autoplay style={{ width: 65, height: 65 }} />}
               label="Homes"
               active={activeTab === "homes"}
               onClick={() => onChangeTab?.("homes")}
             />
             <Tab
-              icon={<PartyPopper className="h-6 w-6" />}
+              icon={<Lottie animationData={baloon} loop autoplay style={{ width: 50, height: 50 }} />}
               label="Experiences"
-              badge="NEW"
+              badge="NEW" // badge over the Lottie
               active={activeTab === "experiences"}
               onClick={() => onChangeTab?.("experiences")}
             />
             <Tab
-              icon={<ConciergeBell className="h-6 w-6" />}
+              icon={<Lottie animationData={bell} loop autoplay style={{ width: 50, height: 50 }} />}
               label="Services"
-              badge="NEW"
+              badge="NEW" // badge over the Lottie
               active={activeTab === "services"}
               onClick={() => onChangeTab?.("services")}
             />
           </ul>
-          {/* 3px underline */}
+
+          {/* underline (centered under icon + label group) */}
           <div
-            className="pointer-events-none mx-auto mt-1 h-[3px] w-10 rounded-full bg-black transition-transform duration-300"
-            style={{ transform: `translateX(${indicator.left}px)` }}
+            className="pointer-events-none absolute left-0 bottom-0 h-[3px] rounded-full bg-black transition-transform duration-300"
+            style={{ width: UNDERLINE_W, transform: `translateX(${indicator.left}px)` }}
             aria-hidden
           />
         </nav>
 
-        {/* Resizable search area (width shrinks with scroll, slides up) */}
+        {/* Resizable search area */}
         <div
-          className="flex justify-center mt-2 transition-[width,margin-top] duration-150 ease-linear"
+          className="flex justify-center transition-[width,margin-top] duration-150 ease-linear"
           style={searchContainerStyle}
         >
           {showSearchBar ? (
@@ -192,19 +201,27 @@ function Tab({ icon, label, badge, active, onClick }) {
         )}
         aria-current={active ? "page" : undefined}
       >
-        <span>{icon}</span>
-        <span>{label}</span>
-        {badge && (
-          <span className="ml-1 rounded-full bg-[#EBEBEB] px-2 py-0.5 text-[11px] font-semibold text-[#222222]">
-            {badge}
+        {/* Measure this wrapper so underline centers under BOTH icon + label */}
+        <span data-measure className="inline-flex items-center gap-2">
+          <span className="relative inline-flex items-center justify-center">
+            {icon}
+            {badge && (
+              <span
+                className="absolute -top-2 right-0 translate-x-1/4 rounded-full bg-[#2C3E67] px-1.5 py-0.5 text-[10px] font-semibold text-white shadow-md"
+                aria-hidden="true"
+              >
+                {badge}
+              </span>
+            )}
           </span>
-        )}
+          <span className="inline-block">{label}</span>
+        </span>
       </button>
     </li>
   );
 }
 
-// Collapsed pill: three equal segments with vertical dividers and a Home icon on the left (inside the first segment)
+// Collapsed pill: three equal segments with vertical dividers and the same Homes Lottie on the left
 function CollapsedPill({ onClick }) {
   return (
     <button
@@ -227,7 +244,7 @@ function CollapsedPill({ onClick }) {
         <div className="flex-1">
           <div className="grid grid-cols-3 divide-x divide-[#DDDDDD] text-[14px] text-[#222222]">
             <div className="flex items-center justify-center gap-2 px-3">
-              <Home className="h-4 w-4 text-[#222222]" />
+              {/* <Lottie animationData={homes} loop autoplay style={{ width: 18, height: 18 }} /> */}
               <span>Anywhere</span>
             </div>
             <div className="flex items-center justify-center px-3">Anytime</div>
@@ -284,7 +301,6 @@ function UserMenuButton() {
         className="inline-flex items-center gap-2 rounded-full border border-[#DDDDDD] px-3 py-2 hover:shadow-sm focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/10"
       >
         <Menu className="h-5 w-5 text-[#222222]" />
-        {/* <User className="h-6 w-6 text-[#717171]" /> */}
       </button>
 
       {open && (
