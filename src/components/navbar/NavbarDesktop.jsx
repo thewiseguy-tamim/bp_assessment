@@ -97,14 +97,14 @@ export default function NavbarDesktop({
   const showSearchBar = progress < SWITCH_AT;
 
   return (
-    <div className="mx-auto flex max-w-[1760px] items-start justify-between gap-4 px-6">
+    <div className="mx-auto grid max-w-[1760px] grid-cols-[1fr_auto_1fr] items-start gap-4 px-6">
       {/* Left */}
-      <div className="shrink-0 pt-1">
+      <div className="shrink-0 pt-1 justify-self-start">
         <Logo size="lg" />
       </div>
 
       {/* Center column: tabs above (fade + height collapse), resizable search below */}
-      <div className="flex flex-1 flex-col items-center">
+      <div className="col-start-2 flex flex-col items-center justify-self-center">
         {/* Icon tabs row */}
         <nav
           ref={navRef}
@@ -145,7 +145,7 @@ export default function NavbarDesktop({
 
         {/* Resizable search area (width shrinks with scroll, slides up) */}
         <div
-          className="mt-2 transition-[width,margin-top] duration-150 ease-linear"
+          className="flex justify-center mt-2 transition-[width,margin-top] duration-150 ease-linear"
           style={searchContainerStyle}
         >
           {showSearchBar ? (
@@ -157,7 +157,7 @@ export default function NavbarDesktop({
       </div>
 
       {/* Right actions */}
-      <div className="flex items-start gap-3 pt-1">
+      <div className="flex items-start gap-3 pt-1 justify-self-end">
         <button
           type="button"
           className="rounded-full px-3 py-2 text-[15px] text-[#222222] transition-colors hover:bg-[#F7F7F7]"
