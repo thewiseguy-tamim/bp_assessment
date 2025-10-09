@@ -3,11 +3,12 @@ import Lottie from "lottie-react";
 import homes from "../../assets/homes.json";
 import baloon from "../../assets/baloon.json";
 import bell from "../../assets/bell.json";
-import success from "../../assets/Success.json";
+import success from "../../assets/success.json";
 
-import Logo from "../common/Logo";
+import Logo from "../../assets/logo.png";
 import SearchBar from "./SearchBar";
 import { Globe, Menu, HelpCircle, Gift, Share2, Users } from "lucide-react";
+import LocaleModal from "../modals/LocaleModal";
 
 const cls = (...a) => a.filter(Boolean).join(" ");
 
@@ -32,6 +33,12 @@ export default function NavbarDesktop({
 }) {
   const navRef = useRef(null);
   const [indicator, setIndicator] = useState({ left: 0 });
+
+  // Locale modal state
+  const [localeOpen, setLocaleOpen] = useState(false);
+  const [language, setLanguage] = useState("en-US");
+  const [currency, setCurrency] = useState("USD");
+  const [translateToEnglish, setTranslateToEnglish] = useState(true);
 
   // Centralized measurement so we can reuse on resize
   const measureIndicator = useCallback(() => {
@@ -99,86 +106,105 @@ export default function NavbarDesktop({
   const showSearchBar = progress < SWITCH_AT;
 
   return (
-    <div className="mx-auto grid max-w-[1760px] grid-cols-[1fr_auto_1fr] items-start gap-4 px-6">
-      {/* Left */}
-      <div className="shrink-0 pt-1 justify-self-start">
-        <Logo size="lg" />
-      </div>
+    <>
+      <div className="mx-auto grid max-w-[1760px] grid-cols-[1fr_auto_1fr] items-start gap-4 px-6">
+        {/* Left */}
+        <div className="absolute top-[-30px] left-20 p-4 z-50">
+  <img src={Logo} alt="Logo" className="w-28 h-auto" />
+</div>
 
-      {/* Center column */}
-      <div className="col-start-2 flex flex-col items-center justify-self-center">
-        {/* Icon tabs row */}
-        <nav
-          ref={navRef}
-          className="relative pb-0  will-change-[opacity] transition-opacity duration-150 ease-linear"
-          style={tabsStyle}
-          aria-label="Primary"
-          aria-hidden={tabsStyle.opacity <= 0.02 ? "true" : "false"}
-        >
-          <ul className="flex items-center gap-8">
-            <Tab
-              icon={<Lottie animationData={homes} loop autoplay style={{ width: 65, height: 65 }} />}
-              label="Homes"
-              active={activeTab === "homes"}
-              onClick={() => onChangeTab?.("homes")}
-            />
-            <Tab
-              icon={<Lottie animationData={baloon} loop autoplay style={{ width: 50, height: 50 }} />}
-              label="Experiences"
-              badge="NEW" // badge over the Lottie
-              active={activeTab === "experiences"}
-              onClick={() => onChangeTab?.("experiences")}
-            />
-            <Tab
-              icon={<Lottie animationData={bell} loop autoplay style={{ width: 50, height: 50 }} />}
-              label="Services"
-              badge="NEW" // badge over the Lottie
-              active={activeTab === "services"}
-              onClick={() => onChangeTab?.("services")}
-            />
-          </ul>
 
-          {/* underline (centered under icon + label group) */}
+
+        {/* Center column */}
+        <div className="col-start-2 flex flex-col items-center justify-self-center">
+          {/* Icon tabs row */}
+          <nav
+            ref={navRef}
+            className="relative pb-0  will-change-[opacity] transition-opacity duration-150 ease-linear"
+            style={tabsStyle}
+            aria-label="Primary"
+            aria-hidden={tabsStyle.opacity <= 0.02 ? "true" : "false"}
+          >
+            <ul className="flex items-center gap-8">
+              <Tab
+                icon={<Lottie animationData={homes} loop autoplay style={{ width: 65, height: 65 }} />}
+                label="Homes"
+                active={activeTab === "homes"}
+                onClick={() => onChangeTab?.("homes")}
+              />
+              <Tab
+                icon={<Lottie animationData={baloon} loop autoplay style={{ width: 50, height: 50 }} />}
+                label="Experiences"
+                badge="NEW" // badge over the Lottie
+                active={activeTab === "experiences"}
+                onClick={() => onChangeTab?.("experiences")}
+              />
+              <Tab
+                icon={<Lottie animationData={bell} loop autoplay style={{ width: 50, height: 50 }} />}
+                label="Services"
+                badge="NEW" // badge over the Lottie
+                active={activeTab === "services"}
+                onClick={() => onChangeTab?.("services")}
+              />
+            </ul>
+
+            {/* underline (centered under icon + label group) */}
+            <div
+              className="pointer-events-none absolute left-0 bottom-0 h-[3px] rounded-full bg-black transition-transform duration-300"
+              style={{ width: UNDERLINE_W, transform: `translateX(${indicator.left}px)` }}
+              aria-hidden
+            />
+          </nav>
+
+          {/* Resizable search area */}
           <div
-            className="pointer-events-none absolute left-0 bottom-0 h-[3px] rounded-full bg-black transition-transform duration-300"
-            style={{ width: UNDERLINE_W, transform: `translateX(${indicator.left}px)` }}
-            aria-hidden
-          />
-        </nav>
+            className="flex justify-center transition-[width,margin-top] duration-150 ease-linear"
+            style={searchContainerStyle}
+          >
+            {showSearchBar ? (
+              <SearchBar onSubmit={() => {}} onChange={() => {}} />
+            ) : (
+              <CollapsedPill onClick={onCompactClick} />
+            )}
+          </div>
+        </div>
 
-        {/* Resizable search area */}
-        <div
-          className="flex justify-center transition-[width,margin-top] duration-150 ease-linear"
-          style={searchContainerStyle}
-        >
-          {showSearchBar ? (
-            <SearchBar onSubmit={() => {}} onChange={() => {}} />
-          ) : (
-            <CollapsedPill onClick={onCompactClick} />
-          )}
+        {/* Right actions */}
+        <div className="flex items-start gap-3 pt-1 justify-self-end">
+          <button
+            type="button"
+            className="rounded-full px-3 py-2 text-[15px] text-[#222222] transition-colors hover:bg-[#F7F7F7]"
+          >
+            Become a host
+          </button>
+
+          <button
+            type="button"
+            aria-label="Language and region"
+            onClick={() => setLocaleOpen(true)}
+            className="inline-flex h-10 w-10 items-center justify-center rounded-full hover:bg-[#F7F7F7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/10"
+          >
+            <Globe className="h-5 w-5 text-[#222222]" />
+          </button>
+
+          <UserMenuButton />
         </div>
       </div>
 
-      {/* Right actions */}
-      <div className="flex items-start gap-3 pt-1 justify-self-end">
-        <button
-          type="button"
-          className="rounded-full px-3 py-2 text-[15px] text-[#222222] transition-colors hover:bg-[#F7F7F7]"
-        >
-          Become a host
-        </button>
-
-        <button
-          type="button"
-          aria-label="Language and region"
-          className="inline-flex h-10 w-10 items-center justify-center rounded-full hover:bg-[#F7F7F7] focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-black/10"
-        >
-          <Globe className="h-5 w-5 text-[#222222]" />
-        </button>
-
-        <UserMenuButton />
-      </div>
-    </div>
+      {/* Locale modal */}
+      <LocaleModal
+        open={localeOpen}
+        onClose={() => setLocaleOpen(false)}
+        selectedLanguage={language}
+        selectedCurrency={currency}
+        onChangeLanguage={(id) => setLanguage(id)}
+        onChangeCurrency={(code) => setCurrency(code)}
+        translationEnabled={translateToEnglish}
+        onToggleTranslation={(v) => setTranslateToEnglish(v)}
+        // initialTab="language" // or "currency"
+        // closeOnSelect={false} // keep open after selecting
+      />
+    </>
   );
 }
 

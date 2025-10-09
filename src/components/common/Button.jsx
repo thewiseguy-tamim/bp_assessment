@@ -1,22 +1,6 @@
 import React, { forwardRef } from "react";
 
-/**
- * Button
- * - Variants: primary (pink), secondary (white), outline, ghost, black
- * - Sizes: xs, sm, md, lg, xl, icon
- * - Rounded: default rounded-full for Airbnb look, can override
- * - Loading state with spinner
- * - Left/right icon slots
- *
- * Props:
- * - variant: "primary" | "secondary" | "outline" | "ghost" | "black"
- * - size: "xs" | "sm" | "md" | "lg" | "xl" | "icon"
- * - rounded: "full" | "lg" | "md" | "sm" (default: "full")
- * - loading: boolean
- * - leftIcon: ReactNode
- * - rightIcon: ReactNode
- * - className, children, ...buttonProps
- */
+
 
 const sizes = {
   xs: "h-7 px-3 text-xs",

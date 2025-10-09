@@ -1,18 +1,5 @@
 import React from "react";
 
-/**
- * Badge
- * - Pill-style labels used for "Guest favorite", "Prices include all fees", etc.
- * - Variants for filled and subtle/outline looks
- *
- * Props:
- * - variant: "neutral" | "subtle" | "outline" | "pink" | "success" | "warning"
- * - size: "sm" | "md" | "lg"
- * - elevated: boolean (adds soft shadow like Airbnb chips)
- * - icon: ReactNode (optional)
- * - className, children
- */
-
 const sizeMap = {
   sm: "text-xs px-2.5 py-1",
   md: "text-sm px-3 py-1.5",

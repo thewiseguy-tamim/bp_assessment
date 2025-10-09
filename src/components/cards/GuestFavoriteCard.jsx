@@ -2,16 +2,7 @@ import React from "react";
 import PropertyCard from "./PropertyCard";
 import Badge from "../common/Badge";
 
-/**
- * GuestFavoriteCard
- * - Property card variant with a subtle highlight and persistent "Guest favorite" label
- *
- * Props:
- * - property: same shape as PropertyCard property (id, title, images, price, nights, rating, etc.)
- * - onClick?: () => void
- * - onWishlistChange?: (id, saved) => void
- * - className?: string
- */
+
 export default function GuestFavoriteCard({
   property,
   onClick,

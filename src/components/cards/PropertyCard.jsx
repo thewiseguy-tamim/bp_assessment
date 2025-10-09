@@ -5,13 +5,13 @@ import img1 from "../../assets/img1.jpg";
 import img2 from "../../assets/img2.jpg";
 import img3 from "../../assets/img3.jpg";
 
-// Fallback images (all 3)
+
 const FALLBACK_IMG = [img1, img2, img3];
 
-// Open-source image pool
+
 const OPEN_IMAGE_POOL = [img1, img2, img3];
 
-// Deterministic index from id
+
 const hashId = (val) => {
   const s = String(val ?? "");
   let h = 0;
@@ -39,7 +39,7 @@ export default function PropertyCard({
     type,
   } = property || {};
 
-  // If no images, use fallback carousel
+  
   const imageList = useMemo(() => {
     if (Array.isArray(images) && images.length) return images;
 

@@ -1,18 +1,6 @@
 import React from "react";
 
-/**
- * CategoryCard
- * - Image/icon left, text right
- * - Hover background change, pointer
- *
- * Props:
- * - title: string
- * - subtitle?: string
- * - icon?: ReactNode
- * - imageSrc?: string
- * - onClick?: () => void
- * - className?: string
- */
+
 export default function CategoryCard({
   title,
   subtitle,
