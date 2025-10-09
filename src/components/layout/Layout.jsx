@@ -6,27 +6,41 @@ import PriceModal from "../modals/PriceModal";
 import Button from "../common/Button";
 import { ChevronUp } from "lucide-react";
 
-/**
- * Layout
- * - Global app shell with Navbar, optional Footer, and portal modals
- * - Includes Skip link for accessibility
- * - Scroll-to-top button appears after 500px
- *
- * Props:
- * - children
- * - showFooter?: boolean (default: true)
- * - showWelcome?: boolean (default: true; WelcomeModal shows once per session)
- * - showPriceToast?: boolean (default: true; toast shows once per session)
- */
+// Mobile
+import NavbarMobile from "../navbar/navmobile/NavbarMobile";
+import BottomNavMob from "../navbar/navmobile/BottomNav(mob)";
+
+function useIsMobile(breakpoint = 1024) {
+  const get = () =>
+    typeof window !== "undefined"
+      ? window.matchMedia(`(max-width: ${breakpoint - 1}px)`).matches
+      : false;
+  const [isMobile, setIsMobile] = useState(get);
+  useEffect(() => {
+    if (typeof window === "undefined") return;
+    const mq = window.matchMedia(`(max-width: ${breakpoint - 1}px)`);
+    const onChange = (e) => setIsMobile(e.matches);
+    mq.addEventListener ? mq.addEventListener("change", onChange) : mq.addListener(onChange);
+    setIsMobile(mq.matches);
+    return () => {
+      mq.removeEventListener ? mq.removeEventListener("change", onChange) : mq.removeListener(onChange);
+    };
+  }, [breakpoint]);
+  return isMobile;
+}
+
 export default function Layout({
   children,
   showFooter = true,
   showWelcome = true,
   showPriceToast = true,
 }) {
+  const isMobile = useIsMobile();
+
+  // Scroll-to-top visibility
   const [showToTop, setShowToTop] = useState(false);
 
-  // Scroll-driven fade for PriceModal
+  // Price toast fade with scroll
   const [priceOpacity, setPriceOpacity] = useState(1);
   const [priceHidden, setPriceHidden] = useState(false);
   const hiddenRef = useRef(false);
@@ -40,32 +54,21 @@ export default function Layout({
   }, []);
 
   useEffect(() => {
-    // initial position
     startY.current = window.scrollY || 0;
-    const maxFadePx = 200; // distance to fully fade out (tweak as needed)
-
+    const maxFadePx = 200;
     const onScroll = () => {
       setShowToTop(window.scrollY > 500);
-      if (hiddenRef.current) return; // already locked hidden
-
+      if (hiddenRef.current) return;
       if (raf.current) return;
       raf.current = requestAnimationFrame(() => {
+        raf.current = null;
         const y = window.scrollY || 0;
         const deltaDown = Math.max(0, y - startY.current);
         const next = Math.max(0, Math.min(1, 1 - deltaDown / maxFadePx));
-
-        if (next <= 0.01) {
-          // fully faded → lock hidden until reload
-          lockHidden();
-        } else {
-          setPriceOpacity(next);
-        }
-
-        raf.current = null;
+        if (next <= 0.01) lockHidden();
+        else setPriceOpacity(next);
       });
     };
-
-    // Initialize once
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
     return () => {
@@ -74,35 +77,54 @@ export default function Layout({
     };
   }, [lockHidden]);
 
-  const scrollToTop = () =>
-    window.scrollTo({ top: 0, behavior: "smooth" });
+  const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
   return (
     <div className="min-h-screen bg-white text-[#222222]">
-      {/* Header */}
+      {/* Desktop header (component hides itself on mobile via lg breakpoint) */}
       <Navbar />
 
+      {/* Mobile header (now controls the search modal internally) */}
+      <div className="lg:hidden">
+        <NavbarMobile onSearchSubmit={(data) => {
+          // Optional: handle search submit globally if needed
+          // console.log("[Layout] Mobile search submit:", data);
+        }}/>
+      </div>
+
       {/* Main content */}
-      <main id="main-content" className="relative">
+      <main
+        id="main-content"
+        className="relative"
+        style={{
+          // Ensure content isn’t hidden behind BottomNav on mobile
+          paddingBottom: isMobile
+            ? "calc(env(safe-area-inset-bottom, 0px) + 80px)"
+            : undefined,
+        }}
+      >
         {children}
       </main>
 
-      {/* Footer */}
+      {/* Footer (hide on mobile if desired with `hidden lg:block`) */}
       {showFooter && <FooterSection />}
 
-      {/* Modals shown once per session (internally managed) */}
+      {/* First-visit/once modals */}
       {showWelcome && <WelcomeModal />}
 
-      {/* Price toast: bottom-center, fades with scroll, locks hidden after fade */}
+      {/* Price toast (kept above BottomNav on mobile) */}
       {showPriceToast && !priceHidden && (
         <PriceModal
           position="bottom-center"
-          offsetBottom={32} // move it a little up from bottom (px)
+          offsetBottom={isMobile ? 96 : 32}
           scrollOpacity={priceOpacity}
         />
       )}
 
-      {/* Scroll-to-top button */}
+      {/* Bottom navigation (mobile only). Visible on Explore; covered when modal is open. */}
+      <BottomNavMob />
+
+      {/* Scroll-to-top */}
       <div className="fixed bottom-4 right-4 z-50">
         <Button
           variant="primary"

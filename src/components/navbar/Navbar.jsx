@@ -1,6 +1,6 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 import NavbarDesktop from "./NavbarDesktop";
-import NavbarMobile from "./NavbarMobile";
+
 import useScrollPosition from "../../hooks/useScrollPosition";
 
 // How many pixels of scroll collapses the search width fully
@@ -72,10 +72,7 @@ export default function Navbar() {
         <NavbarDesktop {...desktopProps} />
       </div>
 
-      {/* Mobile/Tablet */}
-      <div className="block lg:hidden">
-        <NavbarMobile />
-      </div>
+      
     </header>
   );
 }

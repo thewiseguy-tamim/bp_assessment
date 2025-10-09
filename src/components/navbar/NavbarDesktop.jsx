@@ -326,7 +326,11 @@ function UserMenuButton() {
                 </div>
               </div>
               <div className="ml-auto">
-                
+                <img
+                  src="https://images.unsplash.com/photo-1520975922284-9bcd39f0a7c9?w=36&h=36&fit=crop&auto=format"
+                  alt=""
+                  className="h-9 w-9 rounded-lg object-cover"
+                />
               </div>
             </div>
             <Item icon={<Share2 className="h-5 w-5" />} label="Refer a Host" onClick={() => setOpen(false)} />
