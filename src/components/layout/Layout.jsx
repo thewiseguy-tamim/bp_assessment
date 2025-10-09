@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useEffect, useRef, useState, useCallback } from "react";
 import Navbar from "../navbar/Navbar";
 import FooterSection from "../sections/FooterSection";
 import WelcomeModal from "../modals/WelcomeModal";
@@ -24,31 +24,63 @@ export default function Layout({
   showWelcome = true,
   showPriceToast = true,
 }) {
-  // legacy centered search modal removed; SearchBar now manages search state locally
   const [showToTop, setShowToTop] = useState(false);
 
+  // Scroll-driven fade for PriceModal
+  const [priceOpacity, setPriceOpacity] = useState(1);
+  const [priceHidden, setPriceHidden] = useState(false);
+  const hiddenRef = useRef(false);
+  const startY = useRef(0);
+  const raf = useRef(null);
+
+  const lockHidden = useCallback(() => {
+    hiddenRef.current = true;
+    setPriceHidden(true);
+    setPriceOpacity(0);
+  }, []);
+
   useEffect(() => {
-    const onScroll = () => setShowToTop(window.scrollY > 500);
+    // initial position
+    startY.current = window.scrollY || 0;
+    const maxFadePx = 200; // distance to fully fade out (tweak as needed)
+
+    const onScroll = () => {
+      setShowToTop(window.scrollY > 500);
+      if (hiddenRef.current) return; // already locked hidden
+
+      if (raf.current) return;
+      raf.current = requestAnimationFrame(() => {
+        const y = window.scrollY || 0;
+        const deltaDown = Math.max(0, y - startY.current);
+        const next = Math.max(0, Math.min(1, 1 - deltaDown / maxFadePx));
+
+        if (next <= 0.01) {
+          // fully faded → lock hidden until reload
+          lockHidden();
+        } else {
+          setPriceOpacity(next);
+        }
+
+        raf.current = null;
+      });
+    };
+
+    // Initialize once
     onScroll();
     window.addEventListener("scroll", onScroll, { passive: true });
-    return () => window.removeEventListener("scroll", onScroll);
-  }, []);
+    return () => {
+      window.removeEventListener("scroll", onScroll);
+      if (raf.current) cancelAnimationFrame(raf.current);
+    };
+  }, [lockHidden]);
 
   const scrollToTop = () =>
     window.scrollTo({ top: 0, behavior: "smooth" });
 
   return (
     <div className="min-h-screen bg-white text-[#222222]">
-      {/* Skip to main content */}
-      {/* <a
-        href="#main-content"
-        className="sr-only focus:not-sr-only focus:fixed focus:left-4 focus:top-4 focus:z-[100] focus:rounded-lg focus:bg-white focus:px-4 focus:py-2 focus:shadow-md"
-      >
-        Skip to main content
-      </a> */}
-
       {/* Header */}
-  <Navbar />
+      <Navbar />
 
       {/* Main content */}
       <main id="main-content" className="relative">
@@ -60,9 +92,15 @@ export default function Layout({
 
       {/* Modals shown once per session (internally managed) */}
       {showWelcome && <WelcomeModal />}
-      {showPriceToast && <PriceModal position="bottom-left" />}
 
-      {/* Removed legacy centered SearchModal. Search happens inside Navbar SearchBar now. */}
+      {/* Price toast: bottom-center, fades with scroll, locks hidden after fade */}
+      {showPriceToast && !priceHidden && (
+        <PriceModal
+          position="bottom-center"
+          offsetBottom={32} // move it a little up from bottom (px)
+          scrollOpacity={priceOpacity}
+        />
+      )}
 
       {/* Scroll-to-top button */}
       <div className="fixed bottom-4 right-4 z-50">
@@ -71,7 +109,11 @@ export default function Layout({
           size="icon"
           aria-label="Scroll to top"
           onClick={scrollToTop}
-          className={`transition-all ${showToTop ? "opacity-100 translate-y-0" : "pointer-events-none opacity-0 translate-y-2"}`}
+          className={`transition-all ${
+            showToTop
+              ? "opacity-100 translate-y-0"
+              : "pointer-events-none opacity-0 translate-y-2"
+          }`}
         >
           <ChevronUp className="h-5 w-5" />
         </Button>

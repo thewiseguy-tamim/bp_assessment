@@ -58,28 +58,35 @@ const dbg = (...args) => {
 export default function DatesPanel({
   leftMonth,
   rightMonth,
-  // Controlled (optional)
   startDate,
   endDate,
-  // Callback (optional): onDayClick(clicked, nextStart, nextEnd)
   onDayClick,
   flex,
   setFlex,
   setOffset,
 }) {
-  const DAYS = ["S", "M", "T", "W", "T", "F", "S"];
+  // Use unique weekday keys (prevents duplicate key warnings)
+  const DAYS = useMemo(
+    () => [
+      { key: "sun", label: "S" },
+      { key: "mon", label: "M" },
+      { key: "tue", label: "T" },
+      { key: "wed", label: "W" },
+      { key: "thu", label: "T" },
+      { key: "fri", label: "F" },
+      { key: "sat", label: "S" },
+    ],
+    []
+  );
   const quick = [0, 1, 2, 3, 7, 14];
 
-  // Internal state for check-in/out (works if parent doesn't control)
   const [s, setS] = useState(startDate ?? null);
   const [e, setE] = useState(endDate ?? null);
 
-  // Which part is active: 'start' (check-in) or 'end' (check-out)
   const [picking, setPicking] = useState(() =>
     startDate && !endDate ? "end" : "start"
   );
 
-  // Keep internal in sync with controlled props
   useEffect(() => {
     if (startDate !== undefined) setS(startDate);
   }, [startDate]);
@@ -100,7 +107,6 @@ export default function DatesPanel({
     []
   );
 
-  // Forward-only: wheel moves forward; negative deltas ignored
   const handleWheel = useCallback(
     (e) => {
       const delta =
@@ -111,7 +117,6 @@ export default function DatesPanel({
     [setOffset]
   );
 
-  // Forward-only: ArrowRight/PageDown move forward; others ignored
   const handleKey = useCallback(
     (e) => {
       if (e.key === "ArrowRight" || e.key === "PageDown") {
@@ -200,9 +205,9 @@ export default function DatesPanel({
         </div>
 
         <div className="grid grid-cols-7 text-center text-[11px] font-semibold uppercase text-[#8E8E8E] tracking-wide">
-          {DAYS.map((d) => (
-            <div key={d} className="py-1">
-              {d}
+          {DAYS.map((d, i) => (
+            <div key={`hdr-${d.key}-${i}`} className="py-1">
+              {d.label}
             </div>
           ))}
         </div>
@@ -222,7 +227,6 @@ export default function DatesPanel({
                 key={i}
                 className="relative h-10 sm:h-12 flex items-center justify-center"
               >
-                {/* Range bar */}
                 {inRange && !disabled && (
                   <span
                     aria-hidden
@@ -233,8 +237,6 @@ export default function DatesPanel({
                     ].join(" ")}
                   />
                 )}
-
-                {/* Day button */}
                 <button
                   type="button"
                   disabled={disabled}
@@ -262,18 +264,10 @@ export default function DatesPanel({
 
   return (
     <div className="w-[min(920px,calc(100vw-64px))] overflow-x-hidden">
-      {/* Visually hidden next button (kept for a11y and to avoid unused icon) */}
-      <button
-        type="button"
-        onClick={handleNext}
-        className="sr-only"
-        aria-label="Next month"
-        title="Next month"
-      >
+      <button type="button" onClick={handleNext} className="sr-only" aria-label="Next month" title="Next month">
         <ChevronRightIcon />
       </button>
 
-      {/* Focusable wrapper to support keyboard + wheel sliding */}
       <div
         className="mx-auto max-w-[820px] outline-none pt-2"
         tabIndex={0}
@@ -286,7 +280,6 @@ export default function DatesPanel({
           {rightMonth && <div className="hidden lg:block">{Month(rightMonth)}</div>}
         </div>
 
-        {/* Flexibility chips */}
         <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
           {quick.map((d) => {
             const active = flex === d;

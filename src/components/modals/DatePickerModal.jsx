@@ -2,22 +2,6 @@ import React, { useEffect, useMemo, useState } from "react";
 import { X, ChevronLeft, ChevronRight } from "lucide-react";
 import Button from "../common/Button";
 
-/**
- * DatePickerModal
- * - 2 months on desktop, 1 on mobile
- * - Range selection with highlight
- * - Quick filters: Exact, ±1, ±2, ±3, ±7, ±14 days
- * - Clear button, today indication
- *
- * Props:
- * - open: boolean
- * - startDate?: Date|null
- * - endDate?: Date|null
- * - flex?: number (0,1,2,3,7,14)
- * - onClose: () => void
- * - onApply: ({ startDate, endDate, flex }) => void
- */
-
 const startOfMonth = (d) => new Date(d.getFullYear(), d.getMonth(), 1);
 const endOfMonth = (d) => new Date(d.getFullYear(), d.getMonth() + 1, 0);
 const addMonths = (d, m) => new Date(d.getFullYear(), d.getMonth() + m, 1);
@@ -81,7 +65,7 @@ export default function DatePickerModal({
     if (!d) return;
     const dMid = new Date(d); dMid.setHours(0,0,0,0);
     const tMid = new Date(today); tMid.setHours(0,0,0,0);
-    if (dMid < tMid) return; // disable past
+    if (dMid < tMid) return;
     if (!startDate || (startDate && endDate)) {
       setStartDate(d);
       setEndDate(null);
@@ -107,9 +91,7 @@ export default function DatePickerModal({
   return (
     <>
       <div
-        className={`fixed inset-0 z-[70] bg-black/30 transition-opacity ${
-          show ? "opacity-100" : "opacity-0"
-        }`}
+        className={`fixed inset-0 z-[70] bg-black/30 transition-opacity ${show ? "opacity-100" : "opacity-0"}`}
         onClick={onClose}
         aria-hidden="true"
       />
@@ -121,7 +103,6 @@ export default function DatePickerModal({
       >
         <div className="max-h-[85vh] overflow-hidden rounded-3xl bg-white shadow-xl">
           <Header onClose={onClose} />
-
           <div className="p-4">
             <CalendarGrid
               leftMonth={leftMonth}
@@ -133,10 +114,8 @@ export default function DatePickerModal({
               onPrev={() => setOffset((v) => Math.max(0, v - 1))}
               onNext={() => setOffset((v) => v + 1)}
             />
-
             <QuickFlex flex={flex} setFlex={setFlex} onClear={clear} />
           </div>
-
           <Footer onClear={clear} onApply={apply} />
         </div>
       </div>
@@ -149,7 +128,6 @@ export default function DatePickerModal({
           }`}
         >
           <Header onClose={onClose} />
-
           <div className="px-4 pb-4">
             <CalendarGrid
               leftMonth={leftMonth}
@@ -161,16 +139,10 @@ export default function DatePickerModal({
               onPrev={() => setOffset((v) => Math.max(0, v - 1))}
               onNext={() => setOffset((v) => v + 1)}
             />
-
             <QuickFlex flex={flex} setFlex={setFlex} onClear={clear} />
           </div>
-
           <div className="flex items-center justify-between border-t border-[#EEEEEE] px-4 py-3">
-            <button
-              type="button"
-              onClick={clear}
-              className="text-[15px] font-medium underline"
-            >
+            <button type="button" onClick={clear} className="text-[15px] font-medium underline">
               Clear dates
             </button>
             <Button variant="primary" onClick={apply}>
@@ -209,7 +181,17 @@ function CalendarGrid({
   onPrev,
   onNext,
 }) {
-  const DAY_LABELS = ["S", "M", "T", "W", "T", "F", "S"];
+  // Unique weekday keys to remove duplicate key warnings
+  const DAY_LABELS = [
+    { key: "sun", label: "S" },
+    { key: "mon", label: "M" },
+    { key: "tue", label: "T" },
+    { key: "wed", label: "W" },
+    { key: "thu", label: "T" },
+    { key: "fri", label: "F" },
+    { key: "sat", label: "S" },
+  ];
+
   const months = [leftMonth, rightMonth].filter(Boolean);
 
   const renderMonth = (month) => {
@@ -222,8 +204,10 @@ function CalendarGrid({
         <div className="mb-3 text-[15px] font-medium text-[#222222]">{monthLabel}</div>
 
         <div className="grid grid-cols-7 gap-y-2 text-center text-[12px] text-[#717171]">
-          {DAY_LABELS.map((d) => (
-            <div key={d} className="py-1">{d}</div>
+          {DAY_LABELS.map((d, i) => (
+            <div key={`hdr-${d.key}-${i}`} className="py-1">
+              {d.label}
+            </div>
           ))}
         </div>
 
@@ -234,7 +218,6 @@ function CalendarGrid({
             const isStart = d && startDate && dMid && dMid.getTime() === new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate()).getTime();
             const isEnd = d && endDate && dMid && dMid.getTime() === new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate()).getTime();
             const inRange = d && startDate && endDate && dMid > new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate()) && dMid < new Date(endDate.getFullYear(), endDate.getMonth(), endDate.getDate());
-            const isToday = dMid && dMid.getTime() === todayMid.getTime();
 
             return (
               <button
@@ -247,7 +230,6 @@ function CalendarGrid({
                   !d || isPast ? "text-neutral-300 cursor-default" : "hover:bg-black/5",
                   isStart || isEnd ? "bg-[#222222] text-white hover:bg-[#222222]" : "",
                   !isStart && !isEnd && inRange ? "bg-[#FF385C]/10 text-[#222222]" : "",
-                  isToday && !isStart && !isEnd && !inRange ? "ring-1 ring-[#222222]/30" : "",
                 ].join(" ")}
               >
                 {d ? d.getDate() : ""}
@@ -306,11 +288,7 @@ function QuickFlex({ flex, setFlex, onClear }) {
           {d === 0 ? "Exact dates" : `± ${d} ${d === 1 ? "day" : "days"}`}
         </button>
       ))}
-      <button
-        type="button"
-        onClick={onClear}
-        className="ml-auto text-[13px] font-medium underline"
-      >
+      <button type="button" onClick={onClear} className="ml-auto text-[13px] font-medium underline">
         Clear dates
       </button>
     </div>
@@ -320,11 +298,7 @@ function QuickFlex({ flex, setFlex, onClear }) {
 function Footer({ onClear, onApply }) {
   return (
     <div className="flex items-center justify-between border-t border-[#EEEEEE] px-4 py-3">
-      <button
-        type="button"
-        onClick={onClear}
-        className="text-[15px] font-medium underline"
-      >
+      <button type="button" onClick={onClear} className="text-[15px] font-medium underline">
         Clear dates
       </button>
       <Button variant="primary" onClick={onApply}>

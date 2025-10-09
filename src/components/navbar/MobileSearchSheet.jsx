@@ -44,19 +44,24 @@ function monthMatrix(monthDate) {
   return cells;
 }
 
-/* Force demo months to Oct/Nov 2025 to match your mock. Use new Date() for live behavior. */
+/* Force demo months to Oct/Nov 2025 to match mock. Use new Date() for live behavior. */
 const DEMO_TODAY = new Date(2025, 9, 5);
 
+/* Raise sheet above any other app overlays (e.g., price toast) */
+const Z_SHEET = 20000;
+const Z_HEADER = Z_SHEET + 10;
+const Z_FOOTER = Z_SHEET + 20;
+
 export default function MobileSearchSheet({ open, onClose }) {
-  // Debug fingerprint
   useEffect(() => {
-    console.log("MobileSearchSheet v10 mounted", { at: new Date().toISOString() });
+    console.log("MobileSearchSheet ACTIVE v16", { at: new Date().toISOString() });
   }, []);
   useEffect(() => {
-    console.log("MobileSearchSheet v10 open:", open);
+    console.log("MobileSearchSheet open:", open);
   }, [open]);
 
-  const [active, setActive] = useState("who"); // 'where' | 'when' | 'who'
+  // Default to "where" to match screenshots
+  const [active, setActive] = useState("where"); // 'where' | 'when' | 'who'
   const [dateTab, setDateTab] = useState("dates");
 
   const [query, setQuery] = useState("");
@@ -71,7 +76,6 @@ export default function MobileSearchSheet({ open, onClose }) {
   const leftMonth = useMemo(() => addMonths(startOfMonth(today), offset), [today, offset]);
   const rightMonth = useMemo(() => addMonths(leftMonth, 1), [leftMonth]);
 
-  // Stable onClose for Escape handler
   const onCloseRef = useRef(onClose);
   useEffect(() => {
     onCloseRef.current = onClose;
@@ -92,15 +96,16 @@ export default function MobileSearchSheet({ open, onClose }) {
     setGuests({ adults: 0, children: 0, infants: 0, pets: 0 });
     setFlexDays(0);
     setDateTab("dates");
+    setActive("where");
     setOffset(0);
   };
 
   if (!open) return null;
 
   return (
-    <div className="fixed inset-0 z-[1100] bg-white">
+    <div className="fixed inset-0 bg-white" style={{ zIndex: Z_SHEET }}>
       {/* Top icons row (sticky) */}
-      <div className="sticky top-0 z-[1110] bg-white px-4 pt-3 pb-2">
+      <div className="sticky top-0 bg-white px-4 pt-3 pb-2" style={{ zIndex: Z_HEADER }}>
         <div className="mx-auto flex max-w-[560px] items-center justify-between">
           <div className="flex items-center gap-8">
             <TopIcon active label="Homes" icon={<Home className="h-6 w-6" />} />
@@ -109,7 +114,6 @@ export default function MobileSearchSheet({ open, onClose }) {
           </div>
 
           <div className="flex items-center gap-2">
-            {/* Visible on mobile too (match mock) */}
             <button
               type="button"
               onClick={() => setLocation({ id: "flexible", name: "I'm flexible" })}
@@ -133,7 +137,7 @@ export default function MobileSearchSheet({ open, onClose }) {
       {/* Scrollable content */}
       <div className="relative h-[calc(100vh-136px)] overflow-auto px-4 pb-40">
         <div className="mx-auto w-full max-w-[560px]">
-          {/* Where chip */}
+          {/* Where */}
           <SectionChip
             title="Where"
             value={location?.name || "I'm flexible"}
@@ -146,7 +150,7 @@ export default function MobileSearchSheet({ open, onClose }) {
             </PanelCard>
           )}
 
-          {/* When chip */}
+          {/* When */}
           <SectionChip
             className="mt-3"
             title="When"
@@ -174,7 +178,7 @@ export default function MobileSearchSheet({ open, onClose }) {
             </PanelCard>
           )}
 
-          {/* Who chip */}
+          {/* Who */}
           <SectionChip
             className="mt-3"
             title="Who"
@@ -190,12 +194,15 @@ export default function MobileSearchSheet({ open, onClose }) {
         </div>
       </div>
 
-      {/* Bottom action bar: absolute inside the full-screen sheet (robust vs transform wrappers) */}
-      <div className="absolute bottom-0 left-0 right-0 z-[1120] border-t border-[#EBEBEB] bg-white/95 px-4 py-3 backdrop-blur supports-[padding:max(0px)]">
+      {/* Sticky bottom actions (mobile) */}
+      <div
+        className="fixed bottom-0 left-0 right-0 border-t border-[#EBEBEB] bg-white/95 px-4 py-3 backdrop-blur supports-[padding:max(0px)]"
+        style={{ zIndex: Z_FOOTER }}
+      >
         <div className="mx-auto flex max-w-[560px] items-center justify-between">
-          <button type="button" onClick={clearAll} className="text-[14px] underline text-[#222222]">
+          {/* <button type="button" onClick={clearAll} className="text-[14px] underline text-[#222222]">
             Clear all
-          </button>
+          </button> */}
 
           {active === "when" ? (
             <button
