@@ -1,27 +1,17 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import Badge from "../common/Badge";
 import { Heart, ChevronLeft, ChevronRight } from "lucide-react";
+import img1 from "../../assets/img1.jpg";
+import img2 from "../../assets/img2.jpg";
+import img3 from "../../assets/img3.jpg";
 
-// Square fallback to keep layout consistent
-const FALLBACK_IMG = "https://placehold.co/1200x1200?text=No+Image";
+// Fallback images (all 3)
+const FALLBACK_IMG = [img1, img2, img3];
 
-// Curated open-source (Pixabay) property/interior images (stable URLs)
-const OPEN_IMAGE_POOL = [
-  "https://cdn.pixabay.com/photo/2016/12/07/12/57/living-room-1886626_1280.jpg",
-  "https://cdn.pixabay.com/photo/2017/04/16/20/25/bedroom-2235221_1280.jpg",
-  "https://cdn.pixabay.com/photo/2016/11/21/16/01/kitchen-1846128_1280.jpg",
-  "https://cdn.pixabay.com/photo/2016/11/29/06/15/adult-1867484_1280.jpg",
-  "https://cdn.pixabay.com/photo/2015/03/26/09/54/apartment-690086_1280.jpg",
-  "https://cdn.pixabay.com/photo/2017/03/28/12/16/apartment-2187186_1280.jpg",
-  "https://cdn.pixabay.com/photo/2016/11/29/09/32/architecture-1868667_1280.jpg",
-  "https://cdn.pixabay.com/photo/2017/03/28/12/16/apartment-2187187_1280.jpg",
-  "https://cdn.pixabay.com/photo/2017/08/01/01/08/architecture-2567431_1280.jpg",
-  "https://cdn.pixabay.com/photo/2017/08/10/04/20/bedroom-2615812_1280.jpg",
-  "https://cdn.pixabay.com/photo/2017/03/27/14/56/room-2178902_1280.jpg",
-  "https://cdn.pixabay.com/photo/2016/11/29/11/13/bedroom-1866666_1280.jpg",
-];
+// Open-source image pool
+const OPEN_IMAGE_POOL = [img1, img2, img3];
 
-// Deterministic index from id to vary images per card when no images provided
+// Deterministic index from id
 const hashId = (val) => {
   const s = String(val ?? "");
   let h = 0;
@@ -29,23 +19,6 @@ const hashId = (val) => {
   return h;
 };
 
-/**
- * PropertyCard
- * - Square image carousel with dots
- * - Wishlist heart (persisted to localStorage)
- * - Optional "Guest favorite" badge
- * - Hover: image scale
- *
- * Props:
- * - property: {
- *     id, title, location, city, country,
- *     images: string[], price, nights, rating,
- *     isGuestFavorite, type
- *   }
- * - onClick?: () => void
- * - onWishlistChange?: (id, saved) => void
- * - className?: string
- */
 export default function PropertyCard({
   property,
   onClick,
@@ -66,22 +39,14 @@ export default function PropertyCard({
     type,
   } = property || {};
 
-  // Stable, open-source fallback images (square-friendly via object-cover)
+  // If no images, use fallback carousel
   const imageList = useMemo(() => {
     if (Array.isArray(images) && images.length) return images;
 
     const base = hashId(id);
     const pick = (offset) => OPEN_IMAGE_POOL[(base + offset) % OPEN_IMAGE_POOL.length];
-    // Provide at least 3 images for the carousel UX
     return [pick(0), pick(1), pick(2)];
   }, [images, id]);
-
-  const onImgError = (e) => {
-    // Swap to guaranteed placeholder and end skeleton state
-    e.currentTarget.onerror = null;
-    e.currentTarget.src = FALLBACK_IMG;
-    setLoaded(true);
-  };
 
   // Carousel state
   const [index, setIndex] = useState(0);
@@ -92,7 +57,7 @@ export default function PropertyCard({
     setLoaded(false);
   }, [index]);
 
-  // Preload next image for smoother transitions
+  // Preload next image
   useEffect(() => {
     const nextIdx = (index + 1) % imageList.length;
     const img = new Image();
@@ -108,7 +73,7 @@ export default function PropertyCard({
     setIndex((i) => (i + 1) % imageList.length);
   };
 
-  // Swipe (mobile)
+  // Swipe support
   const onTouchStart = (e) => {
     touchStartX.current = e.changedTouches[0].clientX;
   };
@@ -122,7 +87,7 @@ export default function PropertyCard({
     touchStartX.current = null;
   };
 
-  // Wishlist localStorage
+  // Wishlist
   const WISHLIST_KEY = "wishlist";
   const initialSaved = useMemo(() => {
     try {
@@ -132,7 +97,6 @@ export default function PropertyCard({
       return false;
     }
   }, [id]);
-
   const [saved, setSaved] = useState(initialSaved);
 
   const toggleWishlist = (e) => {
@@ -145,7 +109,9 @@ export default function PropertyCard({
       if (next) set.add(id);
       else set.delete(id);
       localStorage.setItem(WISHLIST_KEY, JSON.stringify([...set]));
-    } catch {console.error();}
+    } catch {
+      console.error();
+    }
     onWishlistChange?.(id, next);
   };
 
@@ -169,40 +135,33 @@ export default function PropertyCard({
         onTouchStart={onTouchStart}
         onTouchEnd={onTouchEnd}
       >
-        {/* 1:1 aspect without plugin */}
         <div className="pt-[100%]" />
         <div className="absolute inset-0">
-          {/* Current image (fade) */}
           <img
-            src={imageList[index]}
+            src={imageList[index] || FALLBACK_IMG[index % FALLBACK_IMG.length]}
             alt={title || "Property image"}
             decoding="async"
             className={`h-full w-full object-cover transition-transform duration-300 ${
               loaded ? "opacity-100" : "opacity-0"
             } group-hover:scale-105`}
             onLoad={() => setLoaded(true)}
-            onError={onImgError}
+            onError={(e) => {
+              e.currentTarget.src =
+                FALLBACK_IMG[index % FALLBACK_IMG.length];
+              setLoaded(true);
+            }}
             loading="lazy"
           />
-          {/* Skeleton */}
-          {!loaded && (
-            <div className="absolute inset-0 animate-pulse bg-neutral-200" />
-          )}
+          {!loaded && <div className="absolute inset-0 animate-pulse bg-neutral-200" />}
 
-          {/* Guest favorite badge */}
           {isGuestFavorite && (
             <div className="absolute left-3 top-3">
-              <Badge
-                size="sm"
-                variant="neutral"
-                className="backdrop-blur bg-white/90"
-              >
+              <Badge size="sm" variant="neutral" className="backdrop-blur bg-white/90">
                 Guest favorite
               </Badge>
             </div>
           )}
 
-          {/* Wishlist heart */}
           <button
             type="button"
             aria-pressed={saved}
@@ -211,14 +170,12 @@ export default function PropertyCard({
             className="absolute right-3 top-3 inline-flex h-9 w-9 items-center justify-center rounded-full bg-white/90 shadow-sm transition hover:scale-110"
           >
             <Heart
-              className={`h-5 w-5 ${
-                saved ? "text-[#FF385C]" : "text-[#222222]"
-              }`}
+              className={`h-5 w-5 ${saved ? "text-[#FF385C]" : "text-[#222222]"}`}
               style={saved ? { fill: "#FF385C", stroke: "white" } : {}}
             />
           </button>
 
-          {/* Carousel controls (desktop hover) */}
+          {/* Carousel controls */}
           {imageList.length > 1 && (
             <>
               <button

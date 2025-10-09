@@ -3,7 +3,7 @@ import Lottie from "lottie-react";
 import homes from "../../assets/homes.json";
 import baloon from "../../assets/baloon.json";
 import bell from "../../assets/bell.json";
-import success from "../../assets/success.json";
+import success from "../../assets/Success.json";
 
 import Logo from "../common/Logo";
 import SearchBar from "./SearchBar";

@@ -40,6 +40,9 @@ export default function Layout({
   // Scroll-to-top visibility
   const [showToTop, setShowToTop] = useState(false);
 
+  // Bottom nav hide on scroll down
+  const [hideBottomNav, setHideBottomNav] = useState(false);
+
   // Price toast fade with scroll
   const [priceOpacity, setPriceOpacity] = useState(1);
   const [priceHidden, setPriceHidden] = useState(false);
@@ -53,6 +56,7 @@ export default function Layout({
     setPriceOpacity(0);
   }, []);
 
+  // Price toast + scroll-to-top
   useEffect(() => {
     startY.current = window.scrollY || 0;
     const maxFadePx = 200;
@@ -77,6 +81,26 @@ export default function Layout({
     };
   }, [lockHidden]);
 
+  // Detect scroll direction to hide/show bottom nav
+  useEffect(() => {
+    let lastY = window.scrollY || 0;
+    const onScrollDir = () => {
+      const y = window.scrollY || 0;
+      const goingDown = y > lastY;
+      // Hide when scrolling down beyond small threshold, show when scrolling up
+      if (goingDown && y > 80) {
+        setHideBottomNav(true);
+      } else if (!goingDown) {
+        setHideBottomNav(false);
+      }
+      // Always show near top
+      if (y < 12) setHideBottomNav(false);
+      lastY = y;
+    };
+    window.addEventListener("scroll", onScrollDir, { passive: true });
+    return () => window.removeEventListener("scroll", onScrollDir);
+  }, []);
+
   const scrollToTop = () => window.scrollTo({ top: 0, behavior: "smooth" });
 
   return (
@@ -84,11 +108,10 @@ export default function Layout({
       {/* Desktop header (component hides itself on mobile via lg breakpoint) */}
       <Navbar />
 
-      {/* Mobile header (now controls the search modal internally) */}
+      {/* Mobile header (controls its own modal internally) */}
       <div className="lg:hidden">
         <NavbarMobile onSearchSubmit={(data) => {
-          // Optional: handle search submit globally if needed
-          // console.log("[Layout] Mobile search submit:", data);
+          // Optional: global search handling
         }}/>
       </div>
 
@@ -97,7 +120,6 @@ export default function Layout({
         id="main-content"
         className="relative"
         style={{
-          // Ensure content isn’t hidden behind BottomNav on mobile
           paddingBottom: isMobile
             ? "calc(env(safe-area-inset-bottom, 0px) + 80px)"
             : undefined,
@@ -121,8 +143,8 @@ export default function Layout({
         />
       )}
 
-      {/* Bottom navigation (mobile only). Visible on Explore; covered when modal is open. */}
-      <BottomNavMob />
+      {/* Bottom navigation (mobile only). Fades/slides away on scroll down. */}
+      <BottomNavMob hidden={hideBottomNav} />
 
       {/* Scroll-to-top */}
       <div className="fixed bottom-4 right-4 z-50">

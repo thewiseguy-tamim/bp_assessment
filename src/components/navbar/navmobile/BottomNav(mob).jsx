@@ -6,16 +6,21 @@ const GRAY = "#717171";
 
 /**
  * BottomNav (mobile)
- *
  * Props:
  * - active?: 'explore' | 'wishlists' | 'login'
  * - onChange?: (tab) => void
+ * - hidden?: boolean  // when true, slides/fades down out of view
  */
-export default function BottomNavMob({ active: activeProp, onChange }) {
+export default function BottomNavMob({ active: activeProp, onChange, hidden = false }) {
   const [activeLocal, setActiveLocal] = useState(
     () => sessionStorage.getItem("bottomNavActive") || "explore"
   );
   const active = activeProp ?? activeLocal;
+
+  useEffect(() => {
+    onChange?.(active);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
 
   const setActive = (tab) => {
     setActiveLocal(tab);
@@ -29,15 +34,14 @@ export default function BottomNavMob({ active: activeProp, onChange }) {
     { key: "login", label: "Log in", Icon: UserRound },
   ];
 
-  // Raise onChange for initial render if consumer wants to sync
-  useEffect(() => {
-    onChange?.(active);
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-
   return (
     <nav
-      className="lg:hidden fixed bottom-0 inset-x-0 z-50 bg-white border-t border-[#EBEBEB] shadow-[0_-2px_8px_rgba(0,0,0,0.06)]"
+      className={[
+        "lg:hidden fixed bottom-0 inset-x-0 z-[60] bg-white border-t border-[#EBEBEB]",
+        "shadow-[0_-2px_8px_rgba(0,0,0,0.06)]",
+        "transition-all duration-300 ease-out will-change-transform",
+        hidden ? "translate-y-[110%] opacity-0 pointer-events-none" : "translate-y-0 opacity-100",
+      ].join(" ")}
       role="navigation"
       aria-label="Mobile bottom navigation"
       style={{
@@ -69,7 +73,6 @@ export default function BottomNavMob({ active: activeProp, onChange }) {
                 >
                   {label}
                 </span>
-                {/* Active underline */}
                 <span
                   aria-hidden="true"
                   className={[

@@ -181,7 +181,7 @@ export default function MobileSearchModalMob({
         style={{ paddingBottom: "max(env(safe-area-inset-bottom, 0px), 16px)" }}
       >
         {/* Header (centered tabs with background halo + close) */}
-        <div className="px-4 pt-2 pb-2">
+        <div className="px-4 pt-2 pb-2 mt-12">
           <div className="relative h-[64px]">
             {/* background halo pill behind Lottie icons */}
             <div
@@ -191,13 +191,13 @@ export default function MobileSearchModalMob({
             {/* centered tabs */}
             <div className="absolute inset-0 flex items-end justify-center gap-6 mt-5">
               <CatTab label="Homes" active>
-                <AnimatedNavIcon animationData={homeAnim} size={28} active loop ariaLabel="Homes" />
+                <AnimatedNavIcon animationData={homeAnim} size={68} active loop ariaLabel="Homes" />
               </CatTab>
               <CatTab label="Experiences" isNew>
-                <AnimatedNavIcon animationData={balloonAnim} size={28} active={false} loop={false} ariaLabel="Experiences" />
+                <AnimatedNavIcon animationData={balloonAnim} size={58} active={false} loop={false} ariaLabel="Experiences" />
               </CatTab>
               <CatTab label="Services" isNew>
-                <AnimatedNavIcon animationData={bellAnim} size={28} active={false} loop={false} ariaLabel="Services" />
+                <AnimatedNavIcon animationData={bellAnim} size={58} active={false} loop={false} ariaLabel="Services" />
               </CatTab>
             </div>
             {/* close button */}
