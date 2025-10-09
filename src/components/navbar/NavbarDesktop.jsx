@@ -3,7 +3,7 @@ import Lottie from "lottie-react";
 import homes from "../../assets/homes.json";
 import baloon from "../../assets/baloon.json";
 import bell from "../../assets/bell.json";
-import success from "../../assets/success.json";
+import success from "../../assets/Success.json";
 import Logo from "../../assets/logo.png";
 import SearchBar from "./SearchBar";
 import { Globe, Menu, HelpCircle, Gift, Share2, Users } from "lucide-react";
