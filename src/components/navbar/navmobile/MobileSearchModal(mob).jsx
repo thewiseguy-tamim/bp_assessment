@@ -189,7 +189,7 @@ export default function MobileSearchModalMob({
               className="absolute left-1/2 top-2 -translate-x-1/2 w-[260px] h-10 rounded-full bg-white/80 backdrop-blur-md shadow-[0_2px_10px_rgba(0,0,0,0.06)]"
             />
             {/* centered tabs */}
-            <div className="absolute inset-0 flex items-end justify-center gap-6">
+            <div className="absolute inset-0 flex items-end justify-center gap-6 mt-5">
               <CatTab label="Homes" active>
                 <AnimatedNavIcon animationData={homeAnim} size={28} active loop ariaLabel="Homes" />
               </CatTab>

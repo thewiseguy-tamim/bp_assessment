@@ -3,26 +3,20 @@ import Lottie from "lottie-react";
 import homes from "../../assets/homes.json";
 import baloon from "../../assets/baloon.json";
 import bell from "../../assets/bell.json";
+import success from "../../assets/success.json";
 
 import Logo from "../common/Logo";
 import SearchBar from "./SearchBar";
-import {
-  Globe,
-  Menu,
-  HelpCircle,
-  Gift,
-  Share2,
-  Users,
-} from "lucide-react";
+import { Globe, Menu, HelpCircle, Gift, Share2, Users } from "lucide-react";
 
 const cls = (...a) => a.filter(Boolean).join(" ");
 
 // Control the visual morph (do not change layout)
-const WIDE_WIDTH = 980;          // px when fully expanded (top of page)
-const COLLAPSED_FRAC = 0.38;     // 38% of expanded width
-const MIN_COLLAPSED = 480;       // safe floor so it never gets too tiny
+const WIDE_WIDTH = 980; // px when fully expanded (top of page)
+const COLLAPSED_FRAC = 0.38; // 38% of expanded width
+const MIN_COLLAPSED = 480; // safe floor so it never gets too tiny
 const PILL_WIDTH_TARGET = Math.max(MIN_COLLAPSED, Math.round(WIDE_WIDTH * COLLAPSED_FRAC));
-const SWITCH_AT = 0.35;          // threshold to swap SearchBar -> Pill (0..1)
+const SWITCH_AT = 0.35; // threshold to swap SearchBar -> Pill (0..1)
 
 // Taller row so bigger Lotties aren’t clipped when expanded
 const TAB_ROW_H = 72;
@@ -31,7 +25,7 @@ const TAB_ROW_H = 72;
 const UNDERLINE_W = 115; // px
 
 export default function NavbarDesktop({
-  progress,        // 0..1 (0 wide / 1 pill) – passed from Navbar.jsx
+  progress, // 0..1 (0 wide / 1 pill) – passed from Navbar.jsx
   activeTab,
   onChangeTab,
   onCompactClick,
@@ -269,7 +263,7 @@ function CollapsedPill({ onClick }) {
   );
 }
 
-/* Simple user menu button + anchored menu (unchanged) */
+/* Simple user menu button + anchored menu (unchanged except success Lottie) */
 function UserMenuButton() {
   const [open, setOpen] = useState(false);
   const btnRef = useRef(null);
@@ -325,12 +319,8 @@ function UserMenuButton() {
                   It&apos;s easy to start hosting and earn extra income.
                 </div>
               </div>
-              <div className="ml-auto">
-                <img
-                  src="https://images.unsplash.com/photo-1520975922284-9bcd39f0a7c9?w=36&h=36&fit=crop&auto=format"
-                  alt=""
-                  className="h-9 w-9 rounded-lg object-cover"
-                />
+              <div className="ml-auto pl-3 rounded-lg overflow-hidden">
+                <Lottie animationData={success} loop autoplay style={{ width: 80, height: 80 }} aria-hidden />
               </div>
             </div>
             <Item icon={<Share2 className="h-5 w-5" />} label="Refer a Host" onClick={() => setOpen(false)} />
