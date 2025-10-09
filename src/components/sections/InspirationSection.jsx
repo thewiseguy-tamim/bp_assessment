@@ -1,15 +1,5 @@
 import React from "react";
 
-/**
- * InspirationSection
- * - Grid of inspiration topics (simple clickable cards)
- *
- * Props:
- * - title?: string
- * - items: Array<{ id, title, subtitle, link }>
- * - onClick?: (item) => void
- * - className?: string
- */
 export default function InspirationSection({
   title = "Inspiration for future getaways",
   items = [],

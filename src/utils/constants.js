@@ -1,4 +1,4 @@
-// Theme constants, breakpoints, keys, and common config
+
 
 export const COLORS = {
   primary: "#FF385C",
@@ -23,10 +23,10 @@ export const TYPOGRAPHY = {
 };
 
 export const BREAKPOINTS = {
-  mobileMax: 639,      // < 640
-  tabletMin: 640,      // 640
-  tabletMax: 1024,     // 1024
-  desktopMin: 1025,    // > 1024
+  mobileMax: 639,      
+  tabletMin: 640,      
+  tabletMax: 1024,     
+  desktopMin: 1025,    
 };
 
 export const SCROLL = {

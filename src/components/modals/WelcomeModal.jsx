@@ -1,21 +1,6 @@
 import React, { useCallback, useEffect, useRef, useState } from "react";
 import { X } from "lucide-react";
 
-/**
- * WelcomeModal
- * - Shows once per session (sessionStorage) by default
- * - Dismiss: "Got it", click outside, scroll > threshold, or ESC
- * - Centered modal with fade/scale transitions
- *
- * Props:
- * - open?: boolean (if provided, component becomes controlled)
- * - onClose?: () => void
- * - sessionKey?: string (default: "welcome_modal_shown")
- * - scrollDismissThreshold?: number (default: 100)
- * - showOncePerSession?: boolean (default: true)
- * - animateText?: boolean (default: true)
- * - accentColor?: string (default: "#FF385C")
- */
 export default function WelcomeModal({
   open,
   onClose,

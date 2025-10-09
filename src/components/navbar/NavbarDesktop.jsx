@@ -4,80 +4,59 @@ import homes from "../../assets/homes.json";
 import baloon from "../../assets/baloon.json";
 import bell from "../../assets/bell.json";
 import success from "../../assets/success.json";
-
 import Logo from "../../assets/logo.png";
 import SearchBar from "./SearchBar";
 import { Globe, Menu, HelpCircle, Gift, Share2, Users } from "lucide-react";
 import LocaleModal from "../modals/LocaleModal";
+import HostTypeModal from "../modals/HostTypeModal";
 
 const cls = (...a) => a.filter(Boolean).join(" ");
-
-// Control the visual morph (do not change layout)
-const WIDE_WIDTH = 980; // px when fully expanded (top of page)
-const COLLAPSED_FRAC = 0.38; // 38% of expanded width
-const MIN_COLLAPSED = 480; // safe floor so it never gets too tiny
+const WIDE_WIDTH = 980;
+const COLLAPSED_FRAC = 0.38;
+const MIN_COLLAPSED = 480;
 const PILL_WIDTH_TARGET = Math.max(MIN_COLLAPSED, Math.round(WIDE_WIDTH * COLLAPSED_FRAC));
-const SWITCH_AT = 0.35; // threshold to swap SearchBar -> Pill (0..1)
-
-// Taller row so bigger Lotties aren’t clipped when expanded
+const SWITCH_AT = 0.35;
 const TAB_ROW_H = 72;
+const UNDERLINE_W = 115;
 
-// Underline width (short bar like the screenshot)
-const UNDERLINE_W = 115; // px
-
-export default function NavbarDesktop({
-  progress, // 0..1 (0 wide / 1 pill) – passed from Navbar.jsx
-  activeTab,
-  onChangeTab,
-  onCompactClick,
-}) {
+export default function NavbarDesktop({ progress, activeTab, onChangeTab, onCompactClick }) {
   const navRef = useRef(null);
   const [indicator, setIndicator] = useState({ left: 0 });
-
-  // Locale modal state
   const [localeOpen, setLocaleOpen] = useState(false);
   const [language, setLanguage] = useState("en-US");
   const [currency, setCurrency] = useState("USD");
   const [translateToEnglish, setTranslateToEnglish] = useState(true);
+  const [hostOpen, setHostOpen] = useState(false);
 
-  // Centralized measurement so we can reuse on resize
   const measureIndicator = useCallback(() => {
     const root = navRef.current;
     if (!root) return;
-
     const items = Array.from(root.querySelectorAll("[data-tab]"));
     const idx = ["homes", "experiences", "services"].indexOf(activeTab);
     const el = items[idx];
     if (!el) return;
-
-    // Measure both Lottie + label as one group
     const measureEl = el.querySelector("[data-measure]") || el;
     const parentRect = root.getBoundingClientRect();
     const rect = measureEl.getBoundingClientRect();
-
     const left = rect.left - parentRect.left + rect.width / 2 - UNDERLINE_W / 2;
     setIndicator({ left });
   }, [activeTab]);
 
-  // Keep underline in sync with active tab
   useEffect(() => {
     measureIndicator();
   }, [measureIndicator]);
 
-  // Recalculate underline on resize so it stays centered
   useEffect(() => {
     const onResize = () => measureIndicator();
     window.addEventListener("resize", onResize);
     return () => window.removeEventListener("resize", onResize);
   }, [measureIndicator]);
 
-  // Interpolated width of the center search container
   const currentWidth = useMemo(() => {
     const t = Math.min(1, Math.max(0, progress));
     return Math.round(WIDE_WIDTH + (PILL_WIDTH_TARGET - WIDE_WIDTH) * t);
   }, [progress]);
 
-  // Tabs motion (fade + real height collapse so the search moves up)
   const tabsStyle = useMemo(() => {
     const t = Math.min(1, Math.max(0, progress));
     const opacity = 1 - Math.min(1, t * 1.05);
@@ -91,10 +70,9 @@ export default function NavbarDesktop({
     };
   }, [progress]);
 
-  // Search container vertical offset
   const searchContainerStyle = useMemo(() => {
     const t = Math.min(1, Math.max(0, progress));
-    const baseMt = 5; // adjust if you want more room below the tabs
+    const baseMt = 5;
     const mt = Math.max(0, baseMt * (1 - t));
     return {
       width: currentWidth,
@@ -108,16 +86,11 @@ export default function NavbarDesktop({
   return (
     <>
       <div className="mx-auto grid max-w-[1760px] grid-cols-[1fr_auto_1fr] items-start gap-4 px-6">
-        {/* Left */}
         <div className="absolute top-[-30px] left-20 p-4 z-50">
-  <img src={Logo} alt="Logo" className="w-28 h-auto" />
-</div>
+          <img src={Logo} alt="Logo" className="w-28 h-auto" />
+        </div>
 
-
-
-        {/* Center column */}
         <div className="col-start-2 flex flex-col items-center justify-self-center">
-          {/* Icon tabs row */}
           <nav
             ref={navRef}
             className="relative pb-0  will-change-[opacity] transition-opacity duration-150 ease-linear"
@@ -135,20 +108,19 @@ export default function NavbarDesktop({
               <Tab
                 icon={<Lottie animationData={baloon} loop autoplay style={{ width: 50, height: 50 }} />}
                 label="Experiences"
-                badge="NEW" // badge over the Lottie
+                badge="NEW"
                 active={activeTab === "experiences"}
                 onClick={() => onChangeTab?.("experiences")}
               />
               <Tab
                 icon={<Lottie animationData={bell} loop autoplay style={{ width: 50, height: 50 }} />}
                 label="Services"
-                badge="NEW" // badge over the Lottie
+                badge="NEW"
                 active={activeTab === "services"}
                 onClick={() => onChangeTab?.("services")}
               />
             </ul>
 
-            {/* underline (centered under icon + label group) */}
             <div
               className="pointer-events-none absolute left-0 bottom-0 h-[3px] rounded-full bg-black transition-transform duration-300"
               style={{ width: UNDERLINE_W, transform: `translateX(${indicator.left}px)` }}
@@ -156,24 +128,19 @@ export default function NavbarDesktop({
             />
           </nav>
 
-          {/* Resizable search area */}
           <div
             className="flex justify-center transition-[width,margin-top] duration-150 ease-linear"
             style={searchContainerStyle}
           >
-            {showSearchBar ? (
-              <SearchBar onSubmit={() => {}} onChange={() => {}} />
-            ) : (
-              <CollapsedPill onClick={onCompactClick} />
-            )}
+            {showSearchBar ? <SearchBar onSubmit={() => {}} onChange={() => {}} /> : <CollapsedPill onClick={onCompactClick} />}
           </div>
         </div>
 
-        {/* Right actions */}
         <div className="flex items-start gap-3 pt-1 justify-self-end">
           <button
             type="button"
             className="rounded-full px-3 py-2 text-[15px] text-[#222222] transition-colors hover:bg-[#F7F7F7]"
+            onClick={() => setHostOpen(true)}
           >
             Become a host
           </button>
@@ -191,7 +158,6 @@ export default function NavbarDesktop({
         </div>
       </div>
 
-      {/* Locale modal */}
       <LocaleModal
         open={localeOpen}
         onClose={() => setLocaleOpen(false)}
@@ -201,8 +167,14 @@ export default function NavbarDesktop({
         onChangeCurrency={(code) => setCurrency(code)}
         translationEnabled={translateToEnglish}
         onToggleTranslation={(v) => setTranslateToEnglish(v)}
-        // initialTab="language" // or "currency"
-        // closeOnSelect={false} // keep open after selecting
+      />
+
+      <HostTypeModal
+        open={hostOpen}
+        onClose={() => setHostOpen(false)}
+        onPick={(type) => {
+          onChangeTab?.(type);
+        }}
       />
     </>
   );
@@ -221,7 +193,6 @@ function Tab({ icon, label, badge, active, onClick }) {
         )}
         aria-current={active ? "page" : undefined}
       >
-        {/* Measure this wrapper so underline centers under BOTH icon + label */}
         <span data-measure className="inline-flex items-center gap-2">
           <span className="relative inline-flex items-center justify-center">
             {icon}
@@ -241,7 +212,6 @@ function Tab({ icon, label, badge, active, onClick }) {
   );
 }
 
-// Collapsed pill: three equal segments with vertical dividers and the same Homes Lottie on the left
 function CollapsedPill({ onClick }) {
   return (
     <button
@@ -260,19 +230,15 @@ function CollapsedPill({ onClick }) {
       )}
     >
       <div className="flex items-center justify-between px-3 py-2.5">
-        {/* Three equal parts with vertical dividers */}
         <div className="flex-1">
           <div className="grid grid-cols-3 divide-x divide-[#DDDDDD] text-[14px] text-[#222222]">
             <div className="flex items-center justify-center gap-2 px-3">
-              {/* <Lottie animationData={homes} loop autoplay style={{ width: 18, height: 18 }} /> */}
               <span>Anywhere</span>
             </div>
             <div className="flex items-center justify-center px-3">Anytime</div>
             <div className="flex items-center justify-center px-3">Add guests</div>
           </div>
         </div>
-
-        {/* Pink search circle */}
         <span
           className="ml-2 inline-flex h-9 w-9 items-center justify-center rounded-full bg-[#FF385C] text-white shadow-md transition hover:bg-[#E31C5F]"
           aria-hidden
@@ -289,7 +255,6 @@ function CollapsedPill({ onClick }) {
   );
 }
 
-/* Simple user menu button + anchored menu (unchanged except success Lottie) */
 function UserMenuButton() {
   const [open, setOpen] = useState(false);
   const btnRef = useRef(null);
@@ -306,9 +271,7 @@ function UserMenuButton() {
   }, [open]);
 
   const rect = btnRef.current?.getBoundingClientRect();
-  const style = rect
-    ? { position: "fixed", top: rect.bottom + 8, left: rect.right - 280, zIndex: 60 }
-    : {};
+  const style = rect ? { position: "fixed", top: rect.bottom + 8, left: rect.right - 280, zIndex: 60 } : {};
 
   return (
     <>
@@ -341,9 +304,7 @@ function UserMenuButton() {
             >
               <div className="min-w-0">
                 <div className="text-[14px] font-semibold text-[#222222]">Become a host</div>
-                <div className="text-[13px] text-[#717171]">
-                  It&apos;s easy to start hosting and earn extra income.
-                </div>
+                <div className="text-[13px] text-[#717171]">It&apos;s easy to start hosting and earn extra income.</div>
               </div>
               <div className="ml-auto pl-3 rounded-lg overflow-hidden">
                 <Lottie animationData={success} loop autoplay style={{ width: 80, height: 80 }} aria-hidden />

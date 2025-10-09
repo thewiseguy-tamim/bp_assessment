@@ -1,21 +1,7 @@
 import React, { useEffect, useState, useCallback } from "react";
 import { Tag } from "lucide-react";
 
-/**
- * PriceModal (small toast)
- * - Small floating chip: "Prices include all fees"
- *
- * Props:
- * - open?: boolean (default uncontrolled with auto showing)
- * - visible?: boolean (optional external visibility control)
- * - scrollOpacity?: number (0..1) => multiplies final opacity (for scroll-fade)
- * - onClose?: () => void
- * - sessionKey?: string (default: "price_modal_seen")
- * - showOncePerSession?: boolean (default: true)
- * - autoHideMs?: number | null (default: null)
- * - position?: "bottom-left" | "bottom-right" | "bottom-center" | "center"
- * - offsetBottom?: number (px, applied when position starts with "bottom-")
- */
+
 export default function PriceModal({
   open,
   visible: visibleProp,
@@ -25,7 +11,7 @@ export default function PriceModal({
   showOncePerSession = true,
   autoHideMs = null,
   position = "bottom-left",
-  offsetBottom = 32, // px; moves the toast up from the bottom
+  offsetBottom = 32, 
 }) {
   const [render, setRender] = useState(false);
   const [entered, setEntered] = useState(false);
@@ -34,7 +20,7 @@ export default function PriceModal({
   const controlledVisible = typeof visibleProp === "boolean";
 
   const handleClose = useCallback(() => {
-    // close permanently and mark session
+  
     setEntered(false);
     setTimeout(() => setRender(false), 160);
     if (showOncePerSession) {
@@ -80,7 +66,6 @@ export default function PriceModal({
       center: "left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2",
     }[position] || "left-4";
 
-  // Base visibility (mount/show) multiplied by scroll-driven opacity
   const baseOpacity = controlledVisible ? (visibleProp ? 1 : 0) : entered ? 1 : 0;
   const so = typeof scrollOpacity === "number" ? Math.max(0, Math.min(1, scrollOpacity)) : 1;
   const finalOpacity = baseOpacity * so;
@@ -97,7 +82,7 @@ export default function PriceModal({
       role="status"
       aria-live="polite"
     >
-      {/* Inner wrapper handles the fade so position transforms aren't overridden */}
+
       <div
         className="will-change-[opacity] transition-opacity duration-150 ease-linear"
         style={{ opacity: finalOpacity, pointerEvents: pointer }}

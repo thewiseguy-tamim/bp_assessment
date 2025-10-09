@@ -5,11 +5,11 @@ export default function FlexiblePanel({ setStartDate, setEndDate }) {
   const [length, setLength] = useState("weekend");
   const monthsRef = useRef(null);
 
-  // Scroll affordances
+
   const [canLeft, setCanLeft] = useState(false);
   const [canRight, setCanRight] = useState(true);
 
-  // Accent color used for active length chip
+
   const ACCENT = "#E61E4D";
 
   const months = useMemo(() => {
@@ -57,7 +57,7 @@ export default function FlexiblePanel({ setStartDate, setEndDate }) {
     setEndDate(e);
   };
 
-  // Smooth paging by ~80% of the visible width (feels like a carousel)
+
   const scrollStep = () => {
     const el = monthsRef.current;
     if (!el) return 0;
@@ -70,7 +70,6 @@ export default function FlexiblePanel({ setStartDate, setEndDate }) {
     el.scrollBy({ left: dir * scrollStep(), behavior: "smooth" });
   };
 
-  // Trackpad/mouse wheel -> slide horizontally
   const handleWheel = (e) => {
     const delta = Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
     if (Math.abs(delta) < 8) return;
@@ -78,7 +77,6 @@ export default function FlexiblePanel({ setStartDate, setEndDate }) {
     scrollByDir(delta > 0 ? 1 : -1);
   };
 
-  // Keyboard arrows -> slide
   const handleKeyDown = (e) => {
     if (e.key === "ArrowRight") {
       e.preventDefault();
@@ -91,15 +89,13 @@ export default function FlexiblePanel({ setStartDate, setEndDate }) {
 
   return (
     <div className="w-[min(920px,calc(100vw-64px))]">
-      {/* Title (centered) */}
+
       <div className="mt-1 mb-6 text-center text-[20px] sm:text-[22px] font-semibold text-[#222222]">
         How long would you like to stay?
       </div>
 
-      {/* Alignment wrapper: keeps content centered; slight left nudge to account for arrows */}
       <div className="mx-auto max-w-[900px] px-3 sm:px-0 transform-gpu -translate-x-4 sm:-translate-x-6">
 
-        {/* Length chips (outlined pills) */}
         <div className="mb-8 flex items-center justify-center gap-3">
           {[
             { key: "weekend", label: "Weekend" },
@@ -125,7 +121,7 @@ export default function FlexiblePanel({ setStartDate, setEndDate }) {
           })}
         </div>
 
-        {/* Subheading */}
+
         <div className="mb-2 text-center text-[16px] font-semibold text-[#222222]">
           Go anytime
         </div>
@@ -169,7 +165,7 @@ export default function FlexiblePanel({ setStartDate, setEndDate }) {
           <div className="pointer-events-none absolute left-0 top-0 h-full w-10 bg-gradient-to-r from-white to-transparent" />
           <div className="pointer-events-none absolute right-0 top-0 h-full w-10 bg-gradient-to-l from-white to-transparent" />
 
-          {/* Months scroller: show 6 squares visually on desktop */}
+
           <div
             ref={monthsRef}
             className="flex gap-4 overflow-x-auto pr-3 pl-3 pb-1 outline-none [scrollbar-width:none] [-ms-overflow-style:none] [&::-webkit-scrollbar]:hidden"
@@ -186,7 +182,7 @@ export default function FlexiblePanel({ setStartDate, setEndDate }) {
                 onClick={() => chooseMonth(m.date)}
                 role="option"
                 className={[
-                  // Perfect square size; tuned so 6 fit across typical 880–900px viewport with 16px gaps
+
                   "w-[120px] h-[120px] sm:w-[128px] sm:h-[128px] md:w-[132px] md:h-[132px]",
                   "shrink-0 rounded-[16px] border border-[#DDDDDD] bg-white text-center",
                   "px-4 py-4 transition",

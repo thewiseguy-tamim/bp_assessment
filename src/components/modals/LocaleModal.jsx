@@ -384,11 +384,10 @@ export default function LocaleModal({
           </button>
         </div>
 
-        {/* Scrollable body to preserve the 1:2 shell */}
         <div className="flex-1 overflow-y-auto px-5 py-5 md:px-6 md:py-6">
           {tab === "language" ? (
             <div>
-              {/* Translation card like the screenshot */}
+    
               <div className="mb-5 rounded-xl bg-[#F7F7F7] px-4 py-3">
                 <div className="flex items-center justify-between">
                   <div>

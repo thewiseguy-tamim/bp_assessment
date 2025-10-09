@@ -2,18 +2,7 @@ import React, { useEffect, useState } from "react";
 import { X, Plus, Minus } from "lucide-react";
 import Button from "../common/Button";
 
-/**
- * GuestPickerModal
- * - Four rows: Adults, Children, Infants, Pets
- * - +/- buttons, disabled minus at 0
- * - "Bringing a service animal?" link for Pets
- *
- * Props:
- * - open: boolean
- * - value?: { adults: number, children: number, infants: number, pets: number }
- * - onClose: () => void
- * - onApply: (guests) => void
- */
+
 export default function GuestPickerModal({
   open,
   value = { adults: 0, children: 0, infants: 0, pets: 0 },
@@ -72,7 +61,6 @@ export default function GuestPickerModal({
         aria-hidden="true"
       />
 
-      {/* Mobile sheet */}
       <div
         className={`fixed inset-x-0 bottom-0 z-[75] block lg:hidden p-4 transition-transform duration-300 ${
           show ? "translate-y-0" : "translate-y-6"
@@ -100,7 +88,7 @@ export default function GuestPickerModal({
         </div>
       </div>
 
-      {/* Desktop centered */}
+ 
       <div className="fixed inset-0 z-[75] hidden items-center justify-center p-6 lg:flex">
         <div
           className={`w-full max-w-[520px] rounded-3xl bg-white shadow-xl ring-1 ring-black/5 transition-all ${

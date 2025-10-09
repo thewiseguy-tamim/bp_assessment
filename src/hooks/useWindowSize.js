@@ -1,13 +1,6 @@
 import { useEffect, useState } from "react";
 
-/**
- * useWindowSize
- * - Tracks width/height and exposes breakpoint booleans (mobile/tablet/desktop)
- *   based on your spec: mobile < 640, tablet 640–1024, desktop > 1024
- *
- * Usage:
- * const { width, height, isMobile, isTablet, isDesktop, breakpoint } = useWindowSize();
- */
+
 export default function useWindowSize() {
   const get = () => {
     if (typeof window === "undefined") {

@@ -1,17 +1,6 @@
 import React, { useEffect, useMemo, useState } from "react";
 import { X, MapPin, Building2, Landmark, Mountain } from "lucide-react";
 
-/**
- * SearchModal
- * - Mobile: full-screen overlay
- * - Desktop: large centered modal
- * - Autofocus input, suggested destinations with icons
- *
- * Props:
- * - open: boolean
- * - onClose: () => void
- * - onSelect?: (destination) => void
- */
 const SUGGESTIONS = [
   { id: "nearby", name: "Nearby", tagline: "Find what’s around you", icon: <MapPin className="h-6 w-6 text-[#717171]" /> },
   { id: "toronto", name: "Toronto, Canada", tagline: "For sights like CN Tower", icon: <Building2 className="h-6 w-6 text-[#717171]" /> },

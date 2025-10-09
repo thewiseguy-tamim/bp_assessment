@@ -95,7 +95,7 @@ export default function DatePickerModal({
         onClick={onClose}
         aria-hidden="true"
       />
-      {/* Mobile full-screen */}
+
       <div
         className={`fixed inset-x-0 bottom-0 z-[75] block lg:hidden p-4 transition-transform duration-300 ${
           show ? "translate-y-0" : "translate-y-6"
@@ -120,7 +120,7 @@ export default function DatePickerModal({
         </div>
       </div>
 
-      {/* Desktop centered */}
+
       <div className="fixed inset-0 z-[75] hidden items-center justify-center p-6 lg:flex">
         <div
           className={`w-full max-w-[960px] rounded-3xl bg-white shadow-xl ring-1 ring-black/5 transition-all ${
@@ -181,7 +181,7 @@ function CalendarGrid({
   onPrev,
   onNext,
 }) {
-  // Unique weekday keys to remove duplicate key warnings
+
   const DAY_LABELS = [
     { key: "sun", label: "S" },
     { key: "mon", label: "M" },

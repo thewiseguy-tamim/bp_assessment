@@ -1,5 +1,4 @@
-// Generic helpers: formatting, seeded random, debounce/throttle,
-// date helpers, Unsplash URL builder, etc.
+
 
 /* --------------------- String / Class utilities --------------------- */
 
@@ -16,7 +15,7 @@ export function pluralize(word, count) {
 export function formatCurrency(amount, opts = {}) {
   const {
     currency = "USD",
-    locale = undefined, // use browser locale
+    locale = undefined, 
     maximumFractionDigits = 0,
   } = opts;
   try {
@@ -127,7 +126,6 @@ export function hashString(str = "") {
   return h >>> 0;
 }
 
-// Deterministic PRNG (Mulberry32)
 export function mulberry32(seed) {
   let t = seed >>> 0;
   return function () {

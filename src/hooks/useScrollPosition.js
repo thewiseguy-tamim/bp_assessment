@@ -1,27 +1,20 @@
 import { useEffect, useRef, useState } from "react";
 
-/**
- * useScrollPosition
- * - Tracks window scroll position with rAF for performance
- * - Provides direction, top/bottom flags, and a handy isScrolled boolean
- *
- * Usage:
- * const { y, direction, isScrolled } = useScrollPosition({ scrolledThreshold: 50 });
- */
+
 export default function useScrollPosition(options = {}) {
   const {
-    threshold = 2,          // minimal delta to change direction
-    scrolledThreshold = 50, // y > scrolledThreshold => isScrolled (for navbar)
+    threshold = 2,          
+    scrolledThreshold = 50, 
   } = options;
 
   const [state, setState] = useState({
     x: 0,
     y: 0,
-    direction: null, // "up" | "down" | null
+    direction: null, 
     atTop: true,
     atBottom: false,
     isScrolled: false,
-    progress: 0, // 0..1 scroll progress of the page
+    progress: 0, 
   });
 
   const frame = useRef(0);
@@ -50,7 +43,6 @@ export default function useScrollPosition(options = {}) {
       const atBottom = y >= maxScroll - 1;
       const isScrolled = y > scrolledThreshold;
 
-      // Direction with small movement threshold
       let direction = dirRef.current;
       if (Math.abs(y - lastDirY.current) >= threshold) {
         direction = y > lastPos.current.y ? "down" : "up";
@@ -80,7 +72,6 @@ export default function useScrollPosition(options = {}) {
 
     const onResize = onScroll;
 
-    // Initial read
     read();
 
     window.addEventListener("scroll", onScroll, { passive: true });

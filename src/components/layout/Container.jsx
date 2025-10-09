@@ -1,15 +1,6 @@
 import React from "react";
 
-/**
- * Container
- * - Centers content with responsive horizontal padding
- * - Sizes map to max widths; default is "wide" (1760px) per spec
- *
- * Props:
- * - size: "sm" | "md" | "lg" | "xl" | "wide" | "full"
- * - as: string/element (default "div")
- * - className: string
- */
+
 const sizeMap = {
   sm: "max-w-[640px]",
   md: "max-w-[980px]",

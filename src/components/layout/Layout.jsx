@@ -6,7 +6,7 @@ import PriceModal from "../modals/PriceModal";
 import Button from "../common/Button";
 import { ChevronUp } from "lucide-react";
 
-// Mobile
+
 import NavbarMobile from "../navbar/navmobile/NavbarMobile";
 import BottomNavMob from "../navbar/navmobile/BottomNav(mob)";
 
@@ -37,13 +37,13 @@ export default function Layout({
 }) {
   const isMobile = useIsMobile();
 
-  // Scroll-to-top visibility
+
   const [showToTop, setShowToTop] = useState(false);
 
-  // Bottom nav hide on scroll down
+
   const [hideBottomNav, setHideBottomNav] = useState(false);
 
-  // Price toast fade with scroll
+
   const [priceOpacity, setPriceOpacity] = useState(1);
   const [priceHidden, setPriceHidden] = useState(false);
   const hiddenRef = useRef(false);
@@ -56,7 +56,7 @@ export default function Layout({
     setPriceOpacity(0);
   }, []);
 
-  // Price toast + scroll-to-top
+
   useEffect(() => {
     startY.current = window.scrollY || 0;
     const maxFadePx = 200;
@@ -81,19 +81,18 @@ export default function Layout({
     };
   }, [lockHidden]);
 
-  // Detect scroll direction to hide/show bottom nav
   useEffect(() => {
     let lastY = window.scrollY || 0;
     const onScrollDir = () => {
       const y = window.scrollY || 0;
       const goingDown = y > lastY;
-      // Hide when scrolling down beyond small threshold, show when scrolling up
+
       if (goingDown && y > 80) {
         setHideBottomNav(true);
       } else if (!goingDown) {
         setHideBottomNav(false);
       }
-      // Always show near top
+
       if (y < 12) setHideBottomNav(false);
       lastY = y;
     };
@@ -105,17 +104,16 @@ export default function Layout({
 
   return (
     <div className="min-h-screen bg-white text-[#222222]">
-      {/* Desktop header (component hides itself on mobile via lg breakpoint) */}
+      
       <Navbar />
 
-      {/* Mobile header (controls its own modal internally) */}
       <div className="lg:hidden">
         <NavbarMobile onSearchSubmit={(data) => {
-          // Optional: global search handling
+          
         }}/>
       </div>
 
-      {/* Main content */}
+
       <main
         id="main-content"
         className="relative"
@@ -128,13 +126,12 @@ export default function Layout({
         {children}
       </main>
 
-      {/* Footer (hide on mobile if desired with `hidden lg:block`) */}
       {showFooter && <FooterSection />}
 
-      {/* First-visit/once modals */}
+
       {showWelcome && <WelcomeModal />}
 
-      {/* Price toast (kept above BottomNav on mobile) */}
+ 
       {showPriceToast && !priceHidden && (
         <PriceModal
           position="bottom-center"
@@ -143,10 +140,9 @@ export default function Layout({
         />
       )}
 
-      {/* Bottom navigation (mobile only). Fades/slides away on scroll down. */}
+
       <BottomNavMob hidden={hideBottomNav} />
 
-      {/* Scroll-to-top */}
       <div className="fixed bottom-4 right-4 z-50">
         <Button
           variant="primary"

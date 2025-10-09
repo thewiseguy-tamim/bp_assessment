@@ -13,7 +13,6 @@ const addMonths = (d, m) => new Date(d.getFullYear(), d.getMonth() + m, 1);
 const isSameMonthYear = (a, b) =>
   a && b && a.getFullYear() === b.getFullYear() && a.getMonth() === b.getMonth();
 
-// Debug helper: toggle with window.__SEARCH_DEBUG__ = false
 const dbg = (...args) => {
   if (typeof window === "undefined") return;
   const enabled = window.__SEARCH_DEBUG__ ?? true;
@@ -49,7 +48,6 @@ export default function SearchDropdown({
   );
   const rightMonth = useMemo(() => addMonths(leftMonth, 1), [leftMonth]);
 
-  // Desktop overlay should start below the SearchBar
   const overlayTop = useMemo(() => {
     const el = anchorRef?.current;
     if (!el) return 0;
@@ -109,7 +107,6 @@ export default function SearchDropdown({
     return { position: "fixed", top, left: center, transform: "translateX(-50%)", zIndex: Z_MODAL };
   }, [anchorRef, active]);
 
-  // Width and padding tuned to panels (similar to screenshots)
   const panelSizing =
     active === "where"
       ? "w-[min(440px,calc(100vw-64px))] px-2 pb-4 pt-2"
@@ -117,7 +114,6 @@ export default function SearchDropdown({
       ? "w-[min(480px,calc(100vw-64px))] px-6 pb-6 pt-4"
       : "w-[min(920px,calc(100vw-64px))] px-8 pb-10 pt-6";
 
-  // Slide to checkout after check-in and live-apply
   const handleDayClick = (d) => {
     if (!d) return;
     const tMid = new Date(today.getFullYear(), today.getMonth(), today.getDate());
@@ -126,7 +122,6 @@ export default function SearchDropdown({
 
     const logState = () => dbg("handleDayClick state", { startDate, endDate, clicked: d });
 
-    // If starting a new range or re-starting
     if (!startDate || (startDate && endDate)) {
       setStartDate(d);
       setEndDate(null);
@@ -150,7 +145,6 @@ export default function SearchDropdown({
       return;
     }
 
-    // If clicked before current start, redefine start and keep waiting for checkout
     const startMid = new Date(startDate.getFullYear(), startDate.getMonth(), startDate.getDate());
     if (dMid <= startMid) {
       setStartDate(d);
@@ -175,7 +169,6 @@ export default function SearchDropdown({
       return;
     }
 
-    // Otherwise set end and keep everything in sync
     setEndDate(d);
     onApply?.({ startDate, endDate: d, location, guests, flex });
     dbg("End date selected", d);
@@ -185,14 +178,12 @@ export default function SearchDropdown({
 
   return (
     <>
-      {/* Desktop overlay (does NOT cover the navbar) */}
       <div
         className={`hidden lg:block fixed left-0 right-0 bg-black/20 transition-opacity ${show ? "opacity-100" : "opacity-0"}`}
         style={{ top: overlayTop, bottom: 0, zIndex: Z_MODAL - 1 }}
         onClick={onClose}
         aria-hidden="true"
       />
-      {/* Mobile overlay (full screen) */}
       <div
         className={`block lg:hidden fixed inset-0 bg-black/20 transition-opacity ${show ? "opacity-100" : "opacity-0"}`}
         style={{ zIndex: Z_MODAL - 1 }}
@@ -200,7 +191,6 @@ export default function SearchDropdown({
         aria-hidden="true"
       />
 
-      {/* Desktop anchored dropdown */}
       <div style={anchoredStyle} className="hidden lg:block">
         <div
           className={[
@@ -338,7 +328,7 @@ export default function SearchDropdown({
         </div>
       </div>
 
-      {/* Mobile sheet placeholder: keep your existing mobile sheet code here */}
+
     </>
   );
 }

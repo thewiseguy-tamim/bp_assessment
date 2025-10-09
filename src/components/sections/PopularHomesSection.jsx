@@ -2,12 +2,7 @@ import React, { useRef } from "react";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import PropertyCard from "../cards/PropertyCard";
 
-/**
- * PopularHomesSection
- * - Mobile: horizontal snap carousel
- * - Desktop: wide horizontal scroller with arrow controls
- * - Desktop shows exactly 7 columns without cutoffs
- */
+
 export default function PopularHomesSection({
   title,
   properties = [],

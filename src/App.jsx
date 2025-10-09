@@ -21,7 +21,7 @@ export default function App() {
   const sections = getSectionData();
 
   const handleSearchSubmit = (value) => {
-    // Hook in routing or filtering here
+
     console.log("Search submit:", value);
     window.scrollTo({ top: 0, behavior: "smooth" });
   };
@@ -34,9 +34,6 @@ export default function App() {
         onSearchSubmit={handleSearchSubmit}
       />
 
-      {/* Categories / filters preview removed per request */}
-
-      {/* Popular homes sections by city */}
       <div className="mt-6 mb-20 space-y-8">
         {sections.map((s) => (
           <PopularHomesSection
@@ -48,12 +45,6 @@ export default function App() {
         ))}
       </div>
 
-      {/* Inspiration grid */}
-      {/* <InspirationSection
-        items={INSPIRATION_CATEGORIES}
-        onClick={(it) => console.log("Inspiration:", it)}
-        className="mt-10"
-      /> */}
     </Layout>
   );
 }

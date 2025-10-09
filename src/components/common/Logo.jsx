@@ -1,19 +1,5 @@
 import React from "react";
 
-/**
- * Logo
- * - Airbnb-pink brand mark with optional wordmark
- * - Fully clickable, keyboard accessible
- * - No external assets needed (inline SVG)
- *
- * Props:
- * - size: "sm" | "md" | "lg" | "xl" (default: "md")
- * - withText: boolean (default: true)
- * - as: "button" | "a" | "div" (default: "button")
- * - href: string (if as="a")
- * - onClick: function
- * - className: string
- */
 const sizeMap = {
   sm: { icon: 22, text: "text-[18px]" },
   md: { icon: 26, text: "text-[22px]" },
@@ -44,7 +30,7 @@ export default function Logo({
       aria-label="Airbnb home"
       title={title}
     >
-      {/* Pink brand mark (simple pin/loop mark in Airbnb pink) */}
+
       <svg
         width={s.icon}
         height={s.icon}
@@ -52,7 +38,7 @@ export default function Logo({
         aria-hidden="true"
         className="shrink-0 text-[#FF385C]"
       >
-        {/* Stylized location/heart pin to evoke travel brand feeling */}
+
         <path
           fill="currentColor"
           d="M16 2c-5.523 0-10 4.477-10 10 0 4.07 2.246 7.545 5.51 11.092l3.535 3.882a1.75 1.75 0 0 0 2.41 0l3.535-3.882C23.754 19.545 26 16.07 26 12c0-5.523-4.477-10-10-10Zm0 15a5 5 0 1 1 0-10 5 5 0 0 1 0 10Z"

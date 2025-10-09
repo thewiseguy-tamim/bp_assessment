@@ -1,9 +1,9 @@
-// Mock data for properties, suggestions, and inspiration
+
 import { CITIES, PROPERTY_TYPES } from "./constants.js";
 import { buildImageSet, getUnsplashUrl, seededRandom, randRange, uid } from "./helpers.js";
 
 /* ---------------------- Suggested destinations ---------------------- */
-// Matches your SearchModal/SearchDropdown spec (icon is a semantic key)
+
 export const SUGGESTED_DESTINATIONS = [
   { id: "nearby",   name: "Nearby",                tagline: "Find what’s around you",      icon: "nearby" },
   { id: "toronto",  name: "Toronto, Canada",       tagline: "For sights like CN Tower",    icon: "building" },
@@ -26,7 +26,7 @@ export const INSPIRATION_CATEGORIES = [
 ];
 
 /* --------------------------- Category cards ------------------------- */
-// Simple sample data for CategorySection
+
 export const CATEGORY_LIST = [
   { id: "amazing-views", title: "Amazing views", subtitle: "Skyline and ocean vistas", imageSrc: getUnsplashUrl("city,view,skyline", { seed: 11 }) },
   { id: "design", title: "Design", subtitle: "Architect-designed stays", imageSrc: getUnsplashUrl("interior,design,modern", { seed: 12 }) },

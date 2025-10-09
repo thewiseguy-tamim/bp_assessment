@@ -1,7 +1,6 @@
 import React, { useEffect, useMemo, useRef, useState } from "react";
 import { MapPin, Building2, Landmark, Mountain, Search as SearchIcon } from "lucide-react";
 
-// Debug helper
 const dbg = (...args) => {
   if (typeof window === "undefined") return;
   const enabled = window.__SEARCH_DEBUG__ ?? true;
@@ -73,7 +72,7 @@ export default function WherePanel({ query, setQuery, location, setLocation }) {
 
   useEffect(() => {
     setMounted(true);
-    // auto-focus the input for quick typing
+
     inputRef.current?.focus();
     dbg("Mounted WherePanel", { location, query });
   }, []);
@@ -114,7 +113,7 @@ export default function WherePanel({ query, setQuery, location, setLocation }) {
     <div
       className={[
         "relative",
-        // enter animation for panel content
+       
         mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-1",
         "transition-all duration-200",
       ].join(" ")}
@@ -168,7 +167,7 @@ export default function WherePanel({ query, setQuery, location, setLocation }) {
               className={[
                 "group w-full rounded-2xl p-3 flex items-center gap-3",
                 "hover:bg-[#F7F7F7] transition",
-                // slight staggered entrance
+               
                 mounted ? "opacity-100 translate-y-0" : "opacity-0 translate-y-1",
               ].join(" ")}
               style={{ transitionDelay: `${Math.min(i, 8) * 20}ms` }}

@@ -1,17 +1,6 @@
 import React from "react";
 import SearchBar from "../navbar/SearchBar";
 
-/**
- * HeroSection
- * - Centers the SearchBar in a roomy area below the navbar
- * - Use onChange/onSubmit to bubble search params to context or routing
- *
- * Props:
- * - searchValue?: object (SearchBar value shape)
- * - onSearchChange?: (next) => void
- * - onSearchSubmit?: (value) => void
- * - className?: string
- */
 export default function HeroSection({
   
   className = "",

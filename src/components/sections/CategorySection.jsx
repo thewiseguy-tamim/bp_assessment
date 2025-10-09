@@ -1,16 +1,7 @@
 import React from "react";
 import CategoryCard from "../cards/CategoryCard";
 
-/**
- * CategorySection
- * - Displays a grid/list of categories
- *
- * Props:
- * - title?: string
- * - categories: Array<{ id, title, subtitle?, icon?, imageSrc? }>
- * - onSelect?: (category) => void
- * - className?: string
- */
+
 export default function CategorySection({
   title = "Explore by category",
   categories = [],
@@ -24,7 +15,6 @@ export default function CategorySection({
           <h2 className="text-[18px] font-semibold text-[#222222]">{title}</h2>
         </div>
 
-        {/* Full width on mobile, grid on larger screens */}
         <div className="grid grid-cols-1 gap-3 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4">
           {categories.map((c) => (
             <CategoryCard

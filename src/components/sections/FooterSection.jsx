@@ -61,7 +61,6 @@ export default function FooterSection() {
   const [activeTab, setActiveTab] = React.useState("tips");
   const [showMoreApts, setShowMoreApts] = React.useState(false);
 
-  // Tab 1: Tips
   const tips = [
     { title: "Family travel hub", desc: "Tips and inspiration" },
     { title: "Family budget travel", desc: "Get there for less" },
@@ -80,7 +79,6 @@ export default function FooterSection() {
     },
   ];
 
-  // Tab 2: Airbnb-friendly apartments (matches your screenshot + a Show more toggle)
   const aptsInitial = [
     { title: "Albuquerque", desc: "New Mexico" },
     { title: "Arlington, TX", desc: "Texas" },
@@ -149,13 +147,12 @@ export default function FooterSection() {
   return (
     <footer className="w-full bg-[#f7f7f7] mt-5">
       <div className="mx-auto max-w-[1760px] px-4 sm:px-6 border-t border-[#EEEEEE]">
-        {/* Inspiration for future getaways */}
+
         <section className="py-8 sm:py-10">
           <h2 className="text-[22px] sm:text-[26px] font-semibold text-[#222222]">
             Inspiration for future getaways
           </h2>
 
-          {/* Tabs */}
           <div className="mt-5 border-b border-[#EAEAEA]">
             <div role="tablist" className="flex gap-6 overflow-x-auto">
               {tabs.map((t) => {
@@ -180,7 +177,6 @@ export default function FooterSection() {
             </div>
           </div>
 
-          {/* Items under active tab */}
           <div className="mt-6 grid grid-cols-1 gap-y-6 gap-x-8 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6">
             {itemsToRender.map((it) => (
               <a key={it.title} href="#" className="group block" aria-label={it.title}>
@@ -191,7 +187,6 @@ export default function FooterSection() {
               </a>
             ))}
 
-            {/* Show more / Show less (only for apts tab) */}
             {activeTab === "apts" && !showMoreApts && (
               <button
                 type="button"
@@ -221,7 +216,6 @@ export default function FooterSection() {
           </div>
         </section>
 
-        {/* Link columns */}
         <section className="pt-6 sm:pt-10 pb-6 sm:pb-12">
           <div className="grid grid-cols-1 gap-10 sm:grid-cols-3">
             {cols.map((col) => (
@@ -243,10 +237,9 @@ export default function FooterSection() {
           </div>
         </section>
 
-        {/* Bottom bar */}
         <div className="border-t border-[#EEEEEE]">
           <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between py-4">
-            {/* Left: legal */}
+
             <div className="text-[13px] text-[#717171]">
               © {new Date().getFullYear()} Airbnb, Inc. ·
               <a href="#" className="ml-2 hover:underline text-[#222222]">
@@ -276,7 +269,7 @@ export default function FooterSection() {
               </a>
             </div>
 
-            {/* Right: chips and socials */}
+
             <div className="flex items-center gap-2">
               <button
                 type="button"

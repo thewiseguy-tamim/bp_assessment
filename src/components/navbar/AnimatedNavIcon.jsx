@@ -48,7 +48,7 @@ export default function AnimatedNavIcon({
   }, [src, animationData]);
 
   useEffect(() => {
-    // Play once when active
+  
     if (active && lottieRef.current) {
       try {
         lottieRef.current.goToAndPlay(0, true);

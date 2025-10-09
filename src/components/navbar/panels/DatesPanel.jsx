@@ -1,6 +1,5 @@
 import React, { useCallback, useEffect, useMemo, useState } from "react";
 
-// Inline chevron icon (kept for a11y-only "Next" button; hidden visually)
 function ChevronRightIcon({ className = "h-5 w-5" }) {
   return (
     <svg
@@ -18,7 +17,6 @@ function ChevronRightIcon({ className = "h-5 w-5" }) {
   );
 }
 
-// Local helpers
 const startOfMonth = (d) => new Date(d.getFullYear(), d.getMonth(), 1);
 const endOfMonth = (d) => new Date(d.getFullYear(), d.getMonth() + 1, 0);
 const isSameDay = (a, b) =>
@@ -48,7 +46,7 @@ function monthMatrix(monthDate) {
   return cells;
 }
 
-// Debug helper (toggle in DevTools: window.__SEARCH_DEBUG__ = false)
+
 const dbg = (...args) => {
   if (typeof window === "undefined") return;
   const enabled = window.__SEARCH_DEBUG__ ?? true;
@@ -65,7 +63,7 @@ export default function DatesPanel({
   setFlex,
   setOffset,
 }) {
-  // Use unique weekday keys (prevents duplicate key warnings)
+
   const DAYS = useMemo(
     () => [
       { key: "sun", label: "S" },

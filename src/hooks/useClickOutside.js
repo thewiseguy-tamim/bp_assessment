@@ -1,23 +1,6 @@
 import { useEffect } from "react";
 
-/**
- * useClickOutside
- * - Invokes handler when a click/touch occurs outside the provided ref(s)
- * - Also closes on Escape by default
- *
- * Usage:
- * const ref = useRef(null);
- * useClickOutside(ref, () => setOpen(false));
- *
- * Or multiple refs:
- * useClickOutside([refA, refB], handler, { ignore: [ignoreRef], detectEscape: true });
- *
- * Options:
- * - ignore?: RefObject | RefObject[]  (areas to ignore)
- * - disabled?: boolean (default false)
- * - detectEscape?: boolean (default true)
- * - events?: string[] (default ["mousedown", "touchstart"])
- */
+
 export default function useClickOutside(refOrRefs, handler, options = {}) {
   const {
     ignore = [],
@@ -40,10 +23,8 @@ export default function useClickOutside(refOrRefs, handler, options = {}) {
       const target = e.target;
       if (!(target instanceof Node)) return;
 
-      // If click is inside any watched ref, ignore
       if (isInRefs(target, refs)) return;
 
-      // If click is inside any ignore ref, ignore
       if (ignoreRefs.length && isInRefs(target, ignoreRefs)) return;
 
       handler?.(e);

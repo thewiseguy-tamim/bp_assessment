@@ -8,7 +8,7 @@ const initialState = {
     startDate: null,
     endDate: null,
     guests: { adults: 0, children: 0, infants: 0, pets: 0 },
-    flex: 0, // 0, 1, 2, 3, 7, 14
+    flex: 0,
   },
   wishlist: [],
   modals: {
@@ -59,7 +59,6 @@ const AppContext = createContext(null);
 export function AppProvider({ children }) {
   const [state, dispatch] = useReducer(reducer, initialState);
 
-  // Load persisted states on mount
   useEffect(() => {
     try {
       const wl = JSON.parse(localStorage.getItem(STORAGE_KEYS.WISHLIST) || "[]");
@@ -69,7 +68,6 @@ export function AppProvider({ children }) {
     try {
       const session = JSON.parse(sessionStorage.getItem(STORAGE_KEYS.SESSION_SEARCH) || "null");
       if (session && typeof session === "object") {
-        // revive dates
         const startDate = session.startDate ? new Date(session.startDate) : null;
         const endDate = session.endDate ? new Date(session.endDate) : null;
         dispatch({
@@ -80,14 +78,14 @@ export function AppProvider({ children }) {
     } catch {console.error();}
   }, []);
 
-  // Persist wishlist
+
   useEffect(() => {
     try {
       localStorage.setItem(STORAGE_KEYS.WISHLIST, JSON.stringify(state.wishlist));
     } catch {}
   }, [state.wishlist]);
 
-  // Persist search in session
+
   useEffect(() => {
     try {
       const { startDate, endDate, ...rest } = state.search || {};
@@ -102,7 +100,6 @@ export function AppProvider({ children }) {
     } catch {}
   }, [state.search]);
 
-  // Actions
   const setActiveTab = useCallback((key) => dispatch({ type: "SET_ACTIVE_TAB", payload: key }), []);
   const setSearch = useCallback((payload) => dispatch({ type: "SET_SEARCH", payload }), []);
   const updateSearch = useCallback((partial) => dispatch({ type: "PATCH_SEARCH", payload: partial }), []);
