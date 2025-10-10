@@ -148,18 +148,19 @@ export default function FlexiblePanel({ setStartDate, setEndDate }) {
 
           {/* Right arrow */}
           <button
-            type="button"
-            onClick={() => scrollByDir(1)}
-            aria-label="Scroll months right"
-            className={[
-              "absolute right-0 top-1/2 z-10 -translate-y-1/2 translate-x-1/2",
-              "rounded-full border border-[#DDDDDD] bg-white p-2.5 shadow",
-              "transition",
-              canRight ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none",
-            ].join(" ")}
-          >
-            <ChevronRight className="h-5 w-5 text-[#222222]" />
-          </button>
+  type="button"
+  onClick={() => scrollByDir(1)}
+  aria-label="Scroll months right"
+  className={[
+    "absolute top-1/2 z-10 -translate-y-1/2",
+    "right-2 sm:right-4 md:right-6", // moved in from the edge
+    "rounded-full border border-[#DDDDDD] bg-white p-2.5 shadow",
+    "transition",
+    canRight ? "opacity-100 pointer-events-auto" : "opacity-0 pointer-events-none",
+  ].join(" ")}
+>
+  <ChevronRight className="h-5 w-5 text-[#222222]" />
+</button>
 
           {/* Edge fades */}
           <div className="pointer-events-none absolute left-0 top-0 h-full w-10 bg-gradient-to-r from-white to-transparent" />

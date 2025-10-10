@@ -17,6 +17,23 @@ function ChevronRightIcon({ className = "h-5 w-5" }) {
   );
 }
 
+function ChevronLeftIcon({ className = "h-5 w-5" }) {
+  return (
+    <svg
+      className={className}
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <polyline points="15 18 9 12 15 6" />
+    </svg>
+  );
+}
+
 const startOfMonth = (d) => new Date(d.getFullYear(), d.getMonth(), 1);
 const endOfMonth = (d) => new Date(d.getFullYear(), d.getMonth() + 1, 0);
 const isSameDay = (a, b) =>
@@ -46,7 +63,6 @@ function monthMatrix(monthDate) {
   return cells;
 }
 
-
 const dbg = (...args) => {
   if (typeof window === "undefined") return;
   const enabled = window.__SEARCH_DEBUG__ ?? true;
@@ -63,7 +79,6 @@ export default function DatesPanel({
   setFlex,
   setOffset,
 }) {
-
   const DAYS = useMemo(
     () => [
       { key: "sun", label: "S" },
@@ -111,6 +126,7 @@ export default function DatesPanel({
         Math.abs(e.deltaX) > Math.abs(e.deltaY) ? e.deltaX : e.deltaY;
       if (Math.abs(delta) < 8) return;
       if (delta > 0) setOffset((v) => v + 1);
+      else setOffset((v) => v - 1);
     },
     [setOffset]
   );
@@ -120,6 +136,10 @@ export default function DatesPanel({
       if (e.key === "ArrowRight" || e.key === "PageDown") {
         e.preventDefault();
         setOffset((v) => v + 1);
+      }
+      if (e.key === "ArrowLeft" || e.key === "PageUp") {
+        e.preventDefault();
+        setOffset((v) => v - 1);
       }
     },
     [setOffset]
@@ -259,26 +279,57 @@ export default function DatesPanel({
   };
 
   const handleNext = () => setOffset((v) => v + 1);
+  const handlePrev = () => setOffset((v) => v - 1);
 
   return (
     <div className="w-[min(920px,calc(100vw-64px))] overflow-x-hidden">
-      <button type="button" onClick={handleNext} className="sr-only" aria-label="Next month" title="Next month">
-        <ChevronRightIcon />
-      </button>
-
       <div
-        className="mx-auto max-w-[820px] outline-none pt-2"
+        className="relative max-w-[820px] outline-none pt-2"
         tabIndex={0}
         onWheel={handleWheel}
         onKeyDown={handleKey}
         aria-label="Calendar months"
       >
-        <div className="grid grid-cols-1 gap-8 lg:grid-cols-2">
-          {Month(leftMonth)}
-          {rightMonth && <div className="hidden lg:block">{Month(rightMonth)}</div>}
+        <div className="relative">
+          {/* Add side padding so the arrows don't cover the grid */}
+          <div className="grid grid-cols-1 gap-8 lg:grid-cols-2 px-12">
+            {Month(leftMonth)}
+            {rightMonth && (
+              <div className="hidden lg:block">{Month(rightMonth)}</div>
+            )}
+          </div>
+
+          {/* Previous month arrow */}
+          <button
+            type="button"
+            onClick={handlePrev}
+            aria-label="Previous month"
+            title="Previous month"
+            className="absolute left-0 top-1/2 -translate-y-1/2 z-20
+                       flex h-9 w-9 items-center justify-center rounded-full
+                       border border-[#D9D9D9] bg-white text-[#222222] shadow-sm
+                       hover:bg-[#F2F2F2] focus:outline-none focus:ring-2 focus:ring-black"
+          >
+            <ChevronLeftIcon className="h-5 w-5" />
+          </button>
+
+          {/* Next month arrow */}
+          <button
+            type="button"
+            onClick={handleNext}
+            aria-label="Next month"
+            title="Next month"
+            className="absolute right-0 top-1/2 -translate-y-1/2 z-20
+                       flex h-9 w-9 items-center justify-center rounded-full
+                       border border-[#D9D9D9] bg-white text-[#222222] shadow-sm
+                       hover:bg-[#F2F2F2] focus:outline-none focus:ring-2 focus:ring-black"
+          >
+            <ChevronRightIcon className="h-5 w-5" />
+          </button>
         </div>
 
-        <div className="mt-8 flex flex-wrap items-center justify-center gap-2">
+        {/* Left-aligned quick buttons */}
+        <div className="mt-8 flex flex-wrap items-center justify-start gap-2">
           {quick.map((d) => {
             const active = flex === d;
             return (
